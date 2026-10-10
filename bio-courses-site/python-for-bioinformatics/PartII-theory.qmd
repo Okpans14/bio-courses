@@ -1,0 +1,631 @@
+---
+title: "Part II — Real Programming — Theory"
+---
+
+**Python for Bioinformatics**
+
+*From first principles to writing your own tools*
+
+**PART II — Real Programming**
+
+Modules 6–8
+
+File I/O · Errors, debugging & testing · Object-oriented programming
+
+*Read a section, then do the matching exercises before continuing.*
+
+# Contents
+
+[Contents [2](#contents)](#contents)
+
+[Where Part II takes you [3](#where-part-ii-takes-you)](#where-part-ii-takes-you)
+
+[Module 6 — Reading & writing files [4](#module-6-reading-writing-files)](#module-6-reading-writing-files)
+
+[6.1 Opening files the right way: with [4](#opening-files-the-right-way-with)](#opening-files-the-right-way-with)
+
+[6.2 Three ways to read text [4](#three-ways-to-read-text)](#three-ways-to-read-text)
+
+[6.3 Writing files [5](#writing-files)](#writing-files)
+
+[6.4 Parsing FASTA by hand [5](#parsing-fasta-by-hand)](#parsing-fasta-by-hand)
+
+[6.5 FASTQ: four lines per read [6](#fastq-four-lines-per-read)](#fastq-four-lines-per-read)
+
+[6.6 CSV and TSV: tabular data [6](#csv-and-tsv-tabular-data)](#csv-and-tsv-tabular-data)
+
+[Module 7 — Errors, debugging & testing [8](#module-7-errors-debugging-testing)](#module-7-errors-debugging-testing)
+
+[7.1 Reading a traceback [8](#reading-a-traceback)](#reading-a-traceback)
+
+[7.2 Handling errors: try / except [8](#handling-errors-try-except)](#handling-errors-try-except)
+
+[7.3 Raising your own errors [9](#raising-your-own-errors)](#raising-your-own-errors)
+
+[7.4 Debugging deliberately [9](#debugging-deliberately)](#debugging-deliberately)
+
+[7.5 Testing: proving your code works [10](#testing-proving-your-code-works)](#testing-proving-your-code-works)
+
+[The simplest test: assert [10](#the-simplest-test-assert)](#the-simplest-test-assert)
+
+[Real tests: pytest [10](#real-tests-pytest)](#real-tests-pytest)
+
+[Module 8 — Object-oriented programming [11](#module-8-object-oriented-programming)](#module-8-object-oriented-programming)
+
+[8.1 Class and instance: the blueprint and the thing [11](#class-and-instance-the-blueprint-and-the-thing)](#class-and-instance-the-blueprint-and-the-thing)
+
+[8.2 Methods: behaviour that lives on the object [11](#methods-behaviour-that-lives-on-the-object)](#methods-behaviour-that-lives-on-the-object)
+
+[8.3 Dunder methods: making objects behave naturally [12](#dunder-methods-making-objects-behave-naturally)](#dunder-methods-making-objects-behave-naturally)
+
+[8.4 Inheritance: specialising a class [13](#inheritance-specialising-a-class)](#inheritance-specialising-a-class)
+
+[8.5 Where Part II leaves you [13](#where-part-ii-leaves-you)](#where-part-ii-leaves-you)
+
+# Where Part II takes you
+
+In Part I you learned to manipulate sequences in memory: strings, loops, data structures, functions. But every value was typed into your code by hand. Real bioinformatics starts when data comes *from somewhere* — a FASTA file, a FASTQ run, a CSV of results — and goes *back out* somewhere. That is Module 6.
+
+Then comes the difference between code that works on your laptop today and code other people can trust: it handles bad input gracefully (Module 7, error handling and debugging), and it proves it still works after you change it (Module 7, testing). Finally, Module 8 introduces object-oriented programming — bundling data and behaviour into your own types, like a Sequence object that knows its own GC content. This is how Biopython is built, and how you'll structure the tool you eventually put on GitHub.
+
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Time guide**                                                                                                                                                                                                                                                                              |
+|                                                                                                                                                                                                                                                                                             |
+| Module 6 ≈ 7h · Module 7 ≈ 6h · Module 8 ≈ 8h. Total for Part II ≈ 21 hours. By the end you can read real-world files, write robust code with tests, and design your own classes — everything you need before the ecosystem (Part III) and your capstone tool.                              |
++=============================================================================================================================================================================================================================================================================================+
+| **Sample data files**                                                                                                                                                                                                                                                                       |
+|                                                                                                                                                                                                                                                                                             |
+| This part ships with a small data/ folder (provided alongside the notebooks): sample.fasta, sample.fastq, and variants.csv. Put it in the same folder as the exercises notebook so the file-reading exercises have something real to open. Every example in this document uses those files. |
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+# Module 6 — Reading & writing files
+
+This is the module that connects your code to the real world. We cover the file basics, then the three formats you'll meet constantly: FASTA, FASTQ, and CSV. We deliberately parse FASTA *by hand* first — not because you'll do that forever (Biopython does it in Part III), but because understanding the parse is what lets you debug it when a real file is malformed. Estimated: 7 hours.
+
+## 6.1 Opening files the right way: with
+
+Reading a file is a three-step dance: open it, work with it, close it. Python's with statement does the closing for you automatically, even if an error occurs midway. Always use it — manually calling .close() is error-prone and old-fashioned.
+
+> with open("data/sample.fasta") as f:
+>
+> contents = f.read() \# whole file as one string
+>
+> print(len(contents))
+>
+> \# file is automatically closed here, outside the 'with' block
+
+The open() mode is the second argument: "r" read (default), "w" write (overwrites!), "a" append. For text files you can leave it off for reading.
+
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **R/MATLAB contrast**                                                                                                                                                                                                                                                                                       |
+|                                                                                                                                                                                                                                                                                                             |
+| In R you'd reach for readLines() or read.csv(); in MATLAB fopen/fgetl/fclose. Python's with open(...) as f is closest to the MATLAB pattern but the with block removes the need to remember fclose. Forgetting to close files is a real source of bugs in long-running pipelines; with makes it impossible. |
++=============================================================================================================================================================================================================================================================================================================+
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 6.2 Three ways to read text
+
+  ---------------------------------------------------------------------------------------------
+  **Method**              **Returns**                          **Use when**
+  ----------------------- ------------------------------------ --------------------------------
+  .read()                 entire file as one string            small files you want whole
+
+  .readlines()            list of lines (each keeps its \\n)   you want all lines at once
+
+  iterate the file        one line at a time, lazily           large files — memory-efficient
+  ---------------------------------------------------------------------------------------------
+
+The third — iterating directly — is the one to default to, because it never loads the whole file into memory. A 50 GB FASTQ file would crash .read() but iterates fine:
+
+> with open("data/sample.fasta") as f:
+>
+> for line in f:
+>
+> line = line.rstrip("\\n") \# strip the trailing newline
+>
+> print(line)
+
+.rstrip() removes trailing whitespace (including the newline \\n that every line carries). Forgetting this is the single most common file-parsing bug — your strings end up with invisible newlines that break comparisons like line == "\>header".
+
+  ----------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 6 → 6A (reading basics): open sample.fasta three different ways and count its lines. Then return.
+  ----------------------------------------------------------------------------------------------------------------------------------
+
+  ----------------------------------------------------------------------------------------------------------------------------------
+
+## 6.3 Writing files
+
+Open in write mode and use .write(). Unlike print, .write() does *not* add a newline — you add \\n yourself.
+
+> results = \[("rpoB", 0.53), ("katG", 0.61), ("gyrA", 0.58)\]
+>
+> with open("gc_report.tsv", "w") as f:
+>
+> f.write("gene\\tgc\\n") \# header row, tab-separated
+>
+> for gene, gc in results:
+>
+> f.write(f"{gene}\\t{gc:.3f}\\n")
+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Write mode overwrites without warning**                                                                                                                                                                                                                                                                  |
+|                                                                                                                                                                                                                                                                                                            |
+| Opening an existing file with "w" erases it instantly. There is no undo. Use "a" to append instead, and when in doubt write to a new filename. This is exactly the kind of irreversible action worth a moment's care — losing a results file to an accidental overwrite is a rite of passage you can skip. |
++============================================================================================================================================================================================================================================================================================================+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 6.4 Parsing FASTA by hand
+
+A FASTA file is header lines starting with \>, each followed by one or more sequence lines. The classic parse: accumulate sequence lines until you hit the next \>. Here is the canonical pattern, building a dict of {id: sequence}:
+
+> def read_fasta(path):
+>
+> """Parse a FASTA file into {header: sequence}."""
+>
+> sequences = {}
+>
+> header = None
+>
+> seq_parts = \[\]
+>
+> with open(path) as f:
+>
+> for line in f:
+>
+> line = line.rstrip("\\n")
+>
+> if line.startswith("\>"):
+>
+> if header is not None: \# save the previous record
+>
+> sequences\[header\] = "".join(seq_parts)
+>
+> header = line\[1:\] \# drop the '\>'
+>
+> seq_parts = \[\]
+>
+> else:
+>
+> seq_parts.append(line)
+>
+> if header is not None: \# don't forget the last record!
+>
+> sequences\[header\] = "".join(seq_parts)
+>
+> return sequences
+
+Two subtleties worth internalising. First, sequences often span *multiple lines*, so we collect parts in a list and "".join() them — far faster than repeated string +. Second, the **last record** has no following \> to trigger its save, so we save it again after the loop. Forgetting that final save silently drops the last sequence — a bug that passes casual testing and fails in production.
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Why parse by hand if Biopython exists?**                                                                                                                                                                                                                                                                |
+|                                                                                                                                                                                                                                                                                                           |
+| You'll use Bio.SeqIO for real work (Part III). But the day a file is subtly malformed — a stray blank line, Windows line endings, a header with no sequence — you'll need to understand what a parser actually does to fix it. Writing one yourself, once, is worth more than reading the docs ten times. |
++===========================================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 6 → 6B (FASTA): implement read_fasta, run it on sample.fasta, and answer questions about the records. This is the core exercise of the module.                                                                                                                             |
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 6.5 FASTQ: four lines per read
+
+FASTQ stores sequencing reads in repeating blocks of **exactly four lines**: (1) header starting with @, (2) the sequence, (3) a + separator, (4) per-base quality scores encoded as ASCII characters.
+
+> \@read1
+>
+> ATGCGTACGT
+>
+> \+
+>
+> IIIIIIIIII
+>
+> \@read2
+>
+> GGCATTAGCC
+>
+> \+
+>
+> IIIIIHHGFE
+
+Because the structure is rigid, you can read it four lines at a time. Quality scores use **Phred+33** encoding: subtract 33 from the ASCII value of each character to get the Phred score. The function ord(c) gives the ASCII value of a character (the inverse of chr()).
+
+> \# Phred+33: quality of one character
+>
+> def phred(char):
+>
+> return ord(char) - 33
+>
+> print(phred("I")) \# 40 (a high-quality base)
+>
+> print(phred("#")) \# 2 (very low quality)
+
+A Phred score Q relates to error probability as P = 10\^(−Q/10): Q40 means a 1-in-10,000 chance the base is wrong, Q20 is 1-in-100. Averaging Phred scores across a read is a standard quality check, and you'll build exactly that.
+
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 6 → 6C (FASTQ): read sample.fastq four lines at a time and compute mean quality per read. Then attempt the challenge: filter reads by mean quality.
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 6.6 CSV and TSV: tabular data
+
+Comma- (CSV) or tab- (TSV) separated tables are everywhere: variant calls, annotation tables, sample sheets. You *can* split lines by hand with .split(","), but the standard-library csv module handles the awkward cases (quoted fields containing commas, etc.) correctly.
+
+> import csv
+>
+> with open("data/variants.csv") as f:
+>
+> reader = csv.DictReader(f) \# uses the header row as keys
+>
+> for row in reader:
+>
+> \# each row is a dict: {"gene": ..., "position": ..., ...}
+>
+> print(row\["gene"\], row\["position"\])
+
+csv.DictReader turns each row into a dictionary keyed by the column headers — exactly the structure you practised in Module 4, now sourced from a file. Remember that **every value arrives as a string**; convert numeric columns with int() or float() as in Module 1. In Part III, pandas will do all of this in one line, but knowing the manual version means you understand what pandas is doing for you.
+
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **import — the standard library is huge**                                                                                                                                                                                                                                                                         |
+|                                                                                                                                                                                                                                                                                                                   |
+| csv is one of dozens of batteries-included modules. You'll also meet os and pathlib (file paths), collections (Counter, defaultdict), statistics (mean, median), and json. When you need a common utility, check the standard library before writing it yourself — and before reaching for a third-party package. |
++===================================================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 6 → 6D (CSV): read variants.csv with DictReader, convert the numeric column, and filter rows. Then do the module challenge: a FASTA → GC-report writer that ties reading and writing together.                                                                                     |
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+# Module 7 — Errors, debugging & testing
+
+Code that works once, on clean input, is a script. Code that fails clearly on bad input and proves it still works after changes is a *tool*. This module is the bridge. It is also the module that most self-taught programmers skip and later regret — testing especially is what lets you refactor fearlessly and collaborate on GitHub. Estimated: 6 hours.
+
+## 7.1 Reading a traceback
+
+When Python hits an error it stops and prints a **traceback**. Read it **from the bottom up**: the last line names the error type and message; the lines above show the call chain that led there. This is the most useful skill in debugging and most beginners ignore it.
+
+> seq = "ATGCGT"
+>
+> print(seq\[10\]) \# IndexError: string index out of range
+
+The bottom line, IndexError: string index out of range, tells you exactly what went wrong: you asked for position 10 of a 6-character string. The error *type* (IndexError) is a category you'll learn to recognise.
+
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **Error type**                                                                                                                                   **Typical cause**
+  ------------------------------------------------------------------------------------------------------------------------------------------------ -----------------------------------------
+  IndexError                                                                                                                                       index past the end of a list/string
+
+  KeyError                                                                                                                                         dict key that doesn't exist
+
+  ValueError                                                                                                                                       right type, wrong value — int("abc")
+
+  TypeError                                                                                                                                        wrong type — "2" + 3
+
+  FileNotFoundError                                                                                                                                opening a path that isn't there
+
+  ZeroDivisionError                                                                                                                                dividing by zero — e.g. GC of empty seq
+
+  **▶ Practise now —** do Module 7 → 7A (read tracebacks): trigger each error type deliberately and identify it from the traceback. Then return.   
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 7.2 Handling errors: try / except
+
+To handle a problem instead of crashing, wrap the risky code in try and catch the specific error in except. Catch the *specific* exception, not a bare except: — swallowing every error hides bugs.
+
+> def safe_gc(seq):
+>
+> """GC content, or None for an empty sequence."""
+>
+> try:
+>
+> seq = seq.upper()
+>
+> return (seq.count("G") + seq.count("C")) / len(seq)
+>
+> except ZeroDivisionError:
+>
+> return None
+>
+> print(safe_gc("ATGC")) \# 0.5
+>
+> print(safe_gc("")) \# None (handled, no crash)
+
+The full shape has optional else (runs if no error) and finally (always runs, e.g. cleanup):
+
+> try:
+>
+> with open("data/variants.csv") as f:
+>
+> data = f.read()
+>
+> except FileNotFoundError:
+>
+> print("File missing — check the path")
+>
+> else:
+>
+> print(f"Read {len(data)} characters")
+>
+> finally:
+>
+> print("Done attempting to read")
+
+## 7.3 Raising your own errors
+
+Sometimes the right thing is to *refuse* bad input loudly rather than limp on with a wrong answer. Use raise with a clear message. A function that silently accepts invalid DNA and returns a meaningless GC value is worse than one that stops and says why.
+
+> def gc_content(seq):
+>
+> seq = seq.upper()
+>
+> if not set(seq) \<= {"A", "C", "G", "T"}:
+>
+> raise ValueError(f"Invalid bases in sequence: {set(seq) - set('ACGT')}")
+>
+> if len(seq) == 0:
+>
+> raise ValueError("Empty sequence has no GC content")
+>
+> return (seq.count("G") + seq.count("C")) / len(seq)
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Defensive functions are kind to future-you**                                                                                                                                                                                                                                                                  |
+|                                                                                                                                                                                                                                                                                                                 |
+| Validating inputs at the top of a function — and raising a clear ValueError — turns a confusing failure ten functions deep into an obvious one right at the source. When you publish a tool, these messages are the difference between a user fixing their input in seconds versus filing a baffled bug report. |
++=================================================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 7 → 7B (try/except & raise): write a robust gc_content that validates input and handles the empty case. Then return.                                                                                                                                                             |
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 7.4 Debugging deliberately
+
+When code runs but gives the wrong answer, you have three tools, in increasing power:
+
+1.  **print debugging** — drop print() calls to see intermediate values. Crude but instant; everyone does it.
+
+2.  **assertions** — assert condition, "message" stops execution if your assumption is violated. Great for catching impossible states early: assert len(seq) % 3 == 0, "not in frame".
+
+3.  **the VS Code debugger** — set a breakpoint (click left of a line number), press F5, and step through line by line while inspecting every variable. Once you try this you'll never go back to scattering print everywhere. This is your R/MATLAB debugging muscle transferring directly.
+
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **The debugger pays for itself in one session**                                                                                                                                                                                                                                                                                                                                                                                                                     |
+|                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| In VS Code: open your .py file, click in the margin to set a red breakpoint, hit F5, choose "Python File". Execution pauses at the breakpoint; the left panel shows all variables; the toolbar steps over (F10), into (F11), or continues (F5). For a logic bug in a loop, watching the variables change each iteration finds the problem far faster than reading the code. Spend twenty minutes learning this — it's the highest-return skill in the whole module. |
++=====================================================================================================================================================================================================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 7 → 7C (debugging): a function with a planted bug — find it first with print, then with an assert. Then return.                                                                                                                                                                                                                                                                                                                      |
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 7.5 Testing: proving your code works
+
+A test is just code that checks your code. The payoff is enormous: once you have tests, you can change a function and instantly know whether you broke anything. This is what makes a codebase safe to grow — and it's expected of anything serious on GitHub.
+
+### The simplest test: assert
+
+> def reverse_complement(seq):
+>
+> return seq.upper().translate(str.maketrans("ACGT", "TGCA"))\[::-1\]
+>
+> \# quick checks
+>
+> assert reverse_complement("ATGC") == "GCAT"
+>
+> assert reverse_complement("AAAA") == "TTTT"
+>
+> assert reverse_complement("") == ""
+>
+> print("All checks passed")
+
+If any assertion fails, you get an AssertionError pointing at the broken expectation. Good test cases include the **typical case**, the **edge cases** (empty input, single element), and **known-tricky** inputs.
+
+### Real tests: pytest
+
+For anything beyond a few checks, use pytest, the standard testing framework. Install it once (conda install -c conda-forge pytest), put test functions named test\_\* in a file named test\_\*.py, and run pytest in the terminal.
+
+> \# file: test_seqtools.py
+>
+> from seqtools import gc_content, reverse_complement
+>
+> def test_gc_basic():
+>
+> assert gc_content("GCGC") == 1.0
+>
+> assert gc_content("ATAT") == 0.0
+>
+> def test_revcomp_palindrome():
+>
+> assert reverse_complement("ATGCAT") == "ATGCAT"
+>
+> def test_gc_rejects_invalid():
+>
+> import pytest
+>
+> with pytest.raises(ValueError): \# asserts that an error IS raised
+>
+> gc_content("ATBX")
+
+Running pytest discovers and runs every test\_\* function and reports pass/fail with a clear summary. The pytest.raises context manager tests that bad input correctly raises an error — testing the failure path matters as much as the success path. You'll set up exactly this for your seqtools.py module.
+
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **This is the habit that compounds**                                                                                                                                                                                                                                                                                 |
+|                                                                                                                                                                                                                                                                                                                      |
+| Tests feel like extra work until the first time a test catches a bug you introduced while "improving" something. After that you're converted. For your capstone tool, a test file is what lets you accept contributions, refactor confidently, and trust that a green check on GitHub means the code actually works. |
++======================================================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 7 → 7D (testing): write assert-based tests, then convert them to a pytest file and run it. Then tackle the module challenge: harden your seqtools.py with validation and a full test suite.                                                                                           |
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+# Module 8 — Object-oriented programming
+
+So far your data (a sequence string) and your behaviour (functions like gc_content) have lived separately. Object-oriented programming (OOP) bundles them: you define a Sequence **class** whose objects carry their own data and know how to act on it — my_seq.gc_content() instead of gc_content(my_seq). This is how Biopython's Seq and SeqRecord objects work, and how you'll structure a real tool. Estimated: 8 hours.
+
+R uses OOP too (S4, R5/Reference classes), but most R code is functional and you may not have used classes much. MATLAB has classdef. Python's OOP is lighter and used more pervasively. The good news: you only need a handful of concepts to be productive.
+
+## 8.1 Class and instance: the blueprint and the thing
+
+A **class** is a blueprint; an **instance** (or object) is a specific thing built from it. Define a class with class, and give it an \_\_init\_\_ method — the constructor that runs when you create an instance.
+
+> class Sequence:
+>
+> def \_\_init\_\_(self, identifier, seq):
+>
+> self.id = identifier \# store data on the instance
+>
+> self.seq = seq.upper()
+>
+> \# create instances
+>
+> s1 = Sequence("rpoB", "atgcgt")
+>
+> s2 = Sequence("katG", "GGCCTA")
+>
+> print(s1.id, s1.seq) \# rpoB ATGCGT
+>
+> print(s2.seq) \# GGCCTA
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **self is the instance — always the first parameter**                                                                                                                                                                                                                                                                    |
+|                                                                                                                                                                                                                                                                                                                          |
+| Every method's first parameter is self, which refers to the particular instance the method is called on. You never pass it explicitly — s1.gc_content() automatically sends s1 as self. It feels odd for one day; then it clicks. Assigning self.seq = ... stores data *on that instance*, so each object keeps its own. |
++==========================================================================================================================================================================================================================================================================================================================+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 8.2 Methods: behaviour that lives on the object
+
+A **method** is a function defined inside a class. It can use the instance's own data via self. Here we give Sequence the behaviours you wrote as standalone functions in Part I:
+
+> class Sequence:
+>
+> def \_\_init\_\_(self, identifier, seq):
+>
+> self.id = identifier
+>
+> self.seq = seq.upper()
+>
+> def \_\_len\_\_(self): \# enables len(my_seq)
+>
+> return len(self.seq)
+>
+> def gc_content(self):
+>
+> if len(self.seq) == 0:
+>
+> return None
+>
+> g = self.seq.count("G") + self.seq.count("C")
+>
+> return g / len(self.seq)
+>
+> def reverse_complement(self):
+>
+> rc = self.seq.translate(str.maketrans("ACGT", "TGCA"))\[::-1\]
+>
+> return Sequence(self.id + "\_rc", rc) \# returns a new Sequence!
+>
+> s = Sequence("rpoB", "ATGCGC")
+>
+> print(len(s)) \# 6
+>
+> print(s.gc_content()) \# 0.666...
+>
+> print(s.reverse_complement().seq) \# GCGCAT
+
+Notice reverse_complement returns a *new* Sequence object, so you can chain: s.reverse_complement().gc_content(). Methods that return objects of the same class are what make fluent, readable pipelines possible.
+
+  ------------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 8 → 8A (your first class): build a Sequence class with \_\_init\_\_, gc_content, and reverse_complement. Then return.
+  ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 8.3 Dunder methods: making objects behave naturally
+
+Methods with double-underscore names (**"dunder"** methods) hook into Python's built-in syntax. You already saw \_\_init\_\_ and \_\_len\_\_. The most useful others:
+
+  ------------------------------------------------------------------------------
+  **Dunder**              **Enables**                    **Example**
+  ----------------------- ------------------------------ -----------------------
+  \_\_init\_\_            construction                   Sequence("id", "ATG")
+
+  \_\_len\_\_             len()                          len(my_seq)
+
+  \_\_str\_\_             print() / str()                print(my_seq)
+
+  \_\_repr\_\_            the developer-facing display   repr(my_seq)
+
+  \_\_eq\_\_              == comparison                  seq1 == seq2
+
+  \_\_getitem\_\_         indexing & slicing             my_seq\[0\]
+  ------------------------------------------------------------------------------
+
+> class Sequence:
+>
+> def \_\_init\_\_(self, identifier, seq):
+>
+> self.id = identifier
+>
+> self.seq = seq.upper()
+>
+> def \_\_len\_\_(self):
+>
+> return len(self.seq)
+>
+> def \_\_str\_\_(self):
+>
+> return f"{self.id}: {self.seq}"
+>
+> def \_\_repr\_\_(self):
+>
+> return f"Sequence({self.id!r}, {self.seq!r})"
+>
+> def \_\_getitem\_\_(self, index):
+>
+> return self.seq\[index\] \# now slicing works!
+>
+> s = Sequence("rpoB", "ATGCGC")
+>
+> print(s) \# rpoB: ATGCGC (uses \_\_str\_\_)
+>
+> print(s\[0:3\]) \# ATG (uses \_\_getitem\_\_)
+>
+> print(len(s)) \# 6
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **\_\_str\_\_ vs \_\_repr\_\_**                                                                                                                                                                                                                                                                                          |
+|                                                                                                                                                                                                                                                                                                                          |
+| \_\_str\_\_ is the friendly, human-readable form (for print); \_\_repr\_\_ is the unambiguous developer form, ideally something you could paste back to recreate the object. If you only write one, write \_\_repr\_\_ — Python falls back to it for print too, and it's what shows in the debugger and notebook output. |
++==========================================================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 8 → 8B (dunder methods): add \_\_str\_\_, \_\_repr\_\_, and \_\_getitem\_\_ so your Sequence prints nicely and supports slicing. Then return.                                                                                                                                             |
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 8.4 Inheritance: specialising a class
+
+Inheritance lets a class build on another, reusing its code and adding or overriding behaviour. A FastqRead *is a* Sequence with extra quality data — so it inherits everything and adds the quality handling.
+
+> class FastqRead(Sequence): \# inherits from Sequence
+>
+> def \_\_init\_\_(self, identifier, seq, qual):
+>
+> super().\_\_init\_\_(identifier, seq) \# run Sequence's \_\_init\_\_
+>
+> self.qual = qual \# add new data
+>
+> def mean_quality(self): \# add new behaviour
+>
+> scores = \[ord(c) - 33 for c in self.qual\]
+>
+> return sum(scores) / len(scores)
+>
+> r = FastqRead("read1", "ATGC", "IIII")
+>
+> print(r.gc_content()) \# 0.5 inherited from Sequence
+>
+> print(r.mean_quality()) \# 40.0 defined on FastqRead
+
+super().\_\_init\_\_(...) calls the parent's constructor so you don't repeat the id/seq setup. The FastqRead gets gc_content, \_\_len\_\_, slicing — everything — for free, and only specifies what's new. This is exactly how Biopython layers SeqRecord on top of Seq.
+
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Don't over-engineer with inheritance**                                                                                                                                                                                                                                                                                                                                |
+|                                                                                                                                                                                                                                                                                                                                                                         |
+| Inheritance is powerful but easy to overuse. A good rule: reach for it only when there's a genuine "is-a" relationship (FastqRead is a Sequence). If you're tempted to inherit just to reuse one function, a plain function or composition is usually clearer. Beginners who discover OOP tend to build deep class hierarchies they later regret; flat and simple wins. |
++=========================================================================================================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 8 → 8C (inheritance): build FastqRead inheriting from Sequence, adding quality methods. Then tackle the Part II capstone: a small object-oriented FASTA toolkit that reads a file into Sequence objects, with tests.                                                                                                                     |
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 8.5 Where Part II leaves you
+
+You can now read and write the real file formats of bioinformatics, write code that fails clearly and is backed by tests, and design your own classes with methods, dunder methods, and inheritance. Combined with Part I, you have the complete toolkit of plain Python — enough to build a real, well-structured, tested tool entirely by hand.
+
+Part III hands you the ecosystem that makes that tool fast and professional: NumPy (array maths, MATLAB-like), pandas (data tables, R-like), matplotlib (plots), and Biopython (the field's standard library — which you'll now appreciate deeply, having built miniature versions of its parsers and Seq object yourself). After that, Part IV is idiomatic Python plus Git/GitHub, and then your capstone tool from idea to release.
+

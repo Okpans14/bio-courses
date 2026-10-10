@@ -1,0 +1,17 @@
+gene,condition,replicate,tpm
+rpoB,control,1,120.5
+rpoB,control,2,118.2
+rpoB,treated,1,95.1
+rpoB,treated,2,99.8
+katG,control,1,45.0
+katG,control,2,47.3
+katG,treated,1,210.4
+katG,treated,2,198.7
+gyrA,control,1,88.0
+gyrA,control,2,91.2
+gyrA,treated,1,84.5
+gyrA,treated,2,86.1
+inhA,control,1,33.2
+inhA,control,2,31.9
+inhA,treated,1,140.8
+inhA,treated,2,135.5

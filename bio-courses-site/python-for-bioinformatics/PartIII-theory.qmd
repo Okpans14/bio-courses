@@ -1,0 +1,645 @@
+---
+title: "Part III — The Bioinformatics Ecosystem — Theory"
+---
+
+**Python for Bioinformatics**
+
+*From first principles to writing your own tools*
+
+**PART III — The Bioinformatics Ecosystem**
+
+Modules 9–12
+
+NumPy · pandas · matplotlib/seaborn · Biopython
+
+*Read a section, then do the matching exercises before continuing.*
+
+# Contents
+
+[Contents [2](#contents)](#contents)
+
+[Where Part III takes you [3](#where-part-iii-takes-you)](#where-part-iii-takes-you)
+
+[Module 9 — NumPy: arrays & vectorisation [4](#module-9-numpy-arrays-vectorisation)](#module-9-numpy-arrays-vectorisation)
+
+[9.1 Why arrays, not lists? [4](#why-arrays-not-lists)](#why-arrays-not-lists)
+
+[9.2 Creating arrays [4](#creating-arrays)](#creating-arrays)
+
+[9.3 Vectorised maths & comparison [4](#vectorised-maths-comparison)](#vectorised-maths-comparison)
+
+[9.4 Indexing, slicing & boolean masks [5](#indexing-slicing-boolean-masks)](#indexing-slicing-boolean-masks)
+
+[9.5 Axis-based aggregation [5](#axis-based-aggregation)](#axis-based-aggregation)
+
+[9.6 Where NumPy fits [6](#where-numpy-fits)](#where-numpy-fits)
+
+[Module 10 — pandas: data tables [7](#module-10-pandas-data-tables)](#module-10-pandas-data-tables)
+
+[10.1 Series and DataFrame [7](#series-and-dataframe)](#series-and-dataframe)
+
+[10.2 Loading real data [7](#loading-real-data)](#loading-real-data)
+
+[10.3 Selecting rows and columns [7](#selecting-rows-and-columns)](#selecting-rows-and-columns)
+
+[10.4 Filtering with boolean masks [8](#filtering-with-boolean-masks)](#filtering-with-boolean-masks)
+
+[10.5 Creating and transforming columns [8](#creating-and-transforming-columns)](#creating-and-transforming-columns)
+
+[10.6 Grouping and aggregation: groupby [8](#grouping-and-aggregation-groupby)](#grouping-and-aggregation-groupby)
+
+[10.7 Reshaping, sorting, merging — briefly [9](#reshaping-sorting-merging-briefly)](#reshaping-sorting-merging-briefly)
+
+[10.8 Where pandas fits [9](#where-pandas-fits)](#where-pandas-fits)
+
+[Module 11 — Visualisation: matplotlib & seaborn [10](#module-11-visualisation-matplotlib-seaborn)](#module-11-visualisation-matplotlib-seaborn)
+
+[11.1 The anatomy of a matplotlib figure [10](#the-anatomy-of-a-matplotlib-figure)](#the-anatomy-of-a-matplotlib-figure)
+
+[11.2 The common plot types [10](#the-common-plot-types)](#the-common-plot-types)
+
+[11.3 seaborn: statistical plots from DataFrames [11](#seaborn-statistical-plots-from-dataframes)](#seaborn-statistical-plots-from-dataframes)
+
+[11.4 Where visualisation fits [11](#where-visualisation-fits)](#where-visualisation-fits)
+
+[Module 12 — Biopython: the field's standard library [12](#module-12-biopython-the-fields-standard-library)](#module-12-biopython-the-fields-standard-library)
+
+[12.1 The Seq object [12](#the-seq-object)](#the-seq-object)
+
+[12.2 Translation with real codon tables [12](#translation-with-real-codon-tables)](#translation-with-real-codon-tables)
+
+[12.3 Reading files with SeqIO [12](#reading-files-with-seqio)](#reading-files-with-seqio)
+
+[12.4 Writing files & format conversion [13](#writing-files-format-conversion)](#writing-files-format-conversion)
+
+[12.5 A taste of the rest [13](#a-taste-of-the-rest)](#a-taste-of-the-rest)
+
+[12.6 Where Part III leaves you [14](#where-part-iii-leaves-you)](#where-part-iii-leaves-you)
+
+# Where Part III takes you
+
+In Parts I and II you built everything by hand — GC content with .count(), FASTA parsing line by line, your own Sequence class. That was the right way to learn, because now you understand what the tools do *for* you. Part III hands you those tools: the four libraries that do almost all the heavy lifting in real bioinformatics.
+
+Your R and MATLAB background pays off enormously here. NumPy arrays are MATLAB matrices. pandas DataFrames are R data.frames. matplotlib is base R graphics (and seaborn is closer to ggplot2). Biopython is the field-specific layer with no direct equivalent, but you've already built miniature versions of its core objects. The concepts are familiar; you're learning the Python dialect.
+
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Time guide**                                                                                                                                                                                                                                                                                                                |
+|                                                                                                                                                                                                                                                                                                                               |
+| Module 9 (NumPy) ≈ 6h · Module 10 (pandas) ≈ 8h · Module 11 (plotting) ≈ 5h · Module 12 (Biopython) ≈ 8h. Total ≈ 27 hours. By the end you can load a results table, manipulate and summarise it, plot it, and handle real sequence files with the field's standard library — the full working toolkit of a bioinformatician. |
++===============================================================================================================================================================================================================================================================================================================================+
+| **Setup & data**                                                                                                                                                                                                                                                                                                              |
+|                                                                                                                                                                                                                                                                                                                               |
+| Everything was installed in Chapter 0: numpy, pandas, matplotlib, biopython. For seaborn run conda install -c conda-forge seaborn if you haven't. The same data/ folder applies, now with an added expression.csv (a small gene-expression table) used in the pandas and plotting modules.                                    |
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+# Module 9 — NumPy: arrays & vectorisation
+
+NumPy is the foundation of the entire scientific Python stack — pandas, scikit-learn, and most of Biopython's numerics sit on top of it. Its core object is the ndarray, a fast, fixed-type N-dimensional array. If you think in MATLAB matrices, you already think in NumPy. Estimated: 6 hours.
+
+## 9.1 Why arrays, not lists?
+
+A Python list can hold anything and is flexible but slow for maths. A NumPy array holds **one type**, stores data compactly, and runs operations in optimised C code. For numeric work it is often 10–100× faster and far more memory-efficient. The other gift is **vectorisation**: you write a + b instead of a loop, exactly as in MATLAB.
+
+> import numpy as np \# universal convention: np
+>
+> quals = np.array(\[40, 38, 35, 40, 12, 39\]) \# Phred scores of 6 bases
+>
+> print(quals.mean()) \# 34.0 — no loop needed
+>
+> print(quals.max()) \# 40
+>
+> print((quals \< 20).sum()) \# 1 — count low-quality bases
+
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **The mental shift from loops to vectors**                                                                                                                                                                                                                                                                                                                        |
+|                                                                                                                                                                                                                                                                                                                                                                   |
+| In Part I you summed quality scores with a for loop. NumPy lets you operate on the whole array at once: quals.mean(), quals \< 20. This is the same vectorised thinking you used in MATLAB and R — and it's not just shorter, it's dramatically faster. The rule: if you find yourself writing a for loop over a numeric array, there's usually a vectorised way. |
++===================================================================================================================================================================================================================================================================================================================================================================+
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 9.2 Creating arrays
+
+  -----------------------------------------------------------------------
+  **Call**                **Makes**               **MATLAB analogue**
+  ----------------------- ----------------------- -----------------------
+  np.array(\[1,2,3\])     array from a list       \[1 2 3\]
+
+  np.zeros(5)             five zeros              zeros(1,5)
+
+  np.ones((2,3))          2×3 of ones             ones(2,3)
+
+  np.arange(0,10,2)       0,2,4,6,8               0:2:8
+
+  np.linspace(0,1,5)      5 evenly spaced 0→1     linspace(0,1,5)
+  -----------------------------------------------------------------------
+
+Arrays have a .shape (dimensions), .dtype (element type), and .ndim. Unlike MATLAB, NumPy arrays are 0-indexed and a 1-D array is genuinely 1-D (not a 1×N matrix).
+
+> a = np.arange(12) \# 0..11
+>
+> print(a.shape) \# (12,)
+>
+> m = a.reshape(3, 4) \# reshape to 3 rows, 4 cols
+>
+> print(m.shape, m.dtype) \# (3, 4) int64
+
+  -------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 9 → 9A (creating & inspecting arrays): make arrays of quality scores, inspect shape/dtype, reshape. Then return.
+  -------------------------------------------------------------------------------------------------------------------------------------------------
+
+  -------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 9.3 Vectorised maths & comparison
+
+Arithmetic applies element-wise; comparisons produce boolean arrays; functions like np.log2 map over every element. This replaces loops wholesale.
+
+> control = np.array(\[120.5, 45.0, 88.0, 33.2\]) \# TPM, four genes
+>
+> treated = np.array(\[97.5, 204.0, 85.3, 138.0\])
+>
+> fold_change = treated / control \# element-wise
+>
+> log2fc = np.log2(fold_change) \# vectorised log2
+>
+> print(np.round(log2fc, 2)) \# \[-0.31 2.18 -0.04 2.06\]
+>
+> upregulated = log2fc \> 1 \# boolean array
+>
+> print(upregulated) \# \[False True False True\]
+
+The log2 fold-change above is exactly how differential-expression results are reported — and you computed it for four genes with no loop. Phred-to-error-probability (10 \*\* (-quals/10)) is another one-liner you'll use.
+
+## 9.4 Indexing, slicing & boolean masks
+
+Slicing works like Part I strings (0-based, half-open). The powerful addition is the **boolean mask**: index an array with a boolean array to select elements that pass a condition — the vectorised equivalent of filtering with a loop.
+
+> quals = np.array(\[40, 38, 12, 40, 8, 39\])
+>
+> print(quals\[0\]) \# 40 single element
+>
+> print(quals\[1:4\]) \# \[38 12 40\] slice
+>
+> print(quals\[quals \>= 30\]) \# \[40 38 40 39\] boolean mask: high-quality only
+>
+> quals\[quals \< 20\] = 0 \# set all low-quality to 0 in place
+>
+> print(quals) \# \[40 38 0 40 0 39\]
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Boolean masking is the killer feature**                                                                                                                                                                                                                                                        |
+|                                                                                                                                                                                                                                                                                                  |
+| "Give me all bases with quality ≥ 30" becomes quals\[quals \>= 30\]. "How many variants have quality above 40?" becomes (qual \> 40).sum(). This pattern — build a boolean condition, use it to select or count — is everywhere in pandas too (next module), so getting fluent here pays double. |
++==================================================================================================================================================================================================================================================================================================+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+For 2-D arrays, index with m\[row, col\] and use : for whole rows/columns: m\[0, :\] is the first row, m\[:, 1\] the second column. This is MATLAB syntax with 0-based indices.
+
+  ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 9 → 9B (vectorised ops & masking): log2 fold-changes without a loop, and quality filtering with boolean masks. Centrepiece exercises.
+  ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 9.5 Axis-based aggregation
+
+On a 2-D array, reductions like sum, mean, max take an axis argument: axis=0 collapses rows (per-column result), axis=1 collapses columns (per-row result). This is the same dim idea as R's apply or MATLAB's sum(M, dim).
+
+> \# rows = genes, columns = samples (TPM)
+>
+> expr = np.array(\[\[120, 118, 95, 99\],
+>
+> \[ 45, 47, 210, 198\]\])
+>
+> print(expr.mean(axis=1)) \# \[108. 125. \] mean per gene (across samples)
+>
+> print(expr.mean(axis=0)) \# \[82.5 82.5 152.5 148.5\] mean per sample (across genes)
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Remembering axis**                                                                                                                                                                                                                                   |
+|                                                                                                                                                                                                                                                        |
+| A reliable memory aid: axis=0 goes *down* the rows (one number per column); axis=1 goes *across* the columns (one number per row). When you're unsure, check the shape of the result against what you expected — that catches axis mistakes instantly. |
++========================================================================================================================================================================================================================================================+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 9.6 Where NumPy fits
+
+NumPy is your tool for dense numeric data: quality scores, expression matrices, distance matrices, anything you'd hold in a MATLAB matrix. For labelled, mixed-type tabular data — a table with gene names, conditions, and numbers together — you want pandas, which is built on NumPy and is the subject of Module 10. The vectorised thinking you just learned carries straight over.
+
+  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 9 → 9C (axis aggregation) and the module challenge: a small expression-matrix analysis (per-gene means, fold-changes, flagging up/down-regulated genes) — all vectorised, no loops.
+  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Module 10 — pandas: data tables
+
+pandas is where most bioinformatics data analysis actually happens. Its DataFrame is a labelled table — rows and named columns of possibly different types — and it is, deliberately, very close to R's data.frame. If you've used dplyr or base R data manipulation, you'll feel at home; the operations are the same, the syntax differs. This is the longest module of Part III for good reason. Estimated: 8 hours.
+
+## 10.1 Series and DataFrame
+
+Two structures. A Series is a 1-D labelled array (one column). A DataFrame is a 2-D table of Series sharing an index — a spreadsheet, or an R data.frame.
+
+> import pandas as pd \# universal convention: pd
+>
+> df = pd.DataFrame({
+>
+> "gene": \["rpoB", "katG", "gyrA", "inhA"\],
+>
+> "gc": \[0.53, 0.61, 0.58, 0.49\],
+>
+> "length": \[3534, 2223, 2517, 810\],
+>
+> })
+>
+> print(df)
+>
+> print(df.shape) \# (4, 3)
+>
+> print(df\["gene"\]) \# one column -\> a Series
+
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **R data.frame, Python DataFrame**                                                                                                                                                                                                                                                                 |
+|                                                                                                                                                                                                                                                                                                    |
+| Mentally map: df\$gene → df\["gene"\]; nrow(df) → len(df) or df.shape\[0\]; head(df) → df.head(); summary(df) → df.describe(). The big conceptual difference: pandas has an explicit, addressable **index** (row labels), which is more powerful than R's row names and worth understanding early. |
++====================================================================================================================================================================================================================================================================================================+
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 10.2 Loading real data
+
+The reason pandas exists for you: pd.read_csv() replaces the entire manual CSV parser from Module 6 with one line — and it infers types, so numeric columns arrive as numbers, not strings.
+
+> variants = pd.read_csv("data/variants.csv")
+>
+> print(variants.head()) \# first 5 rows
+>
+> print(variants.dtypes) \# quality is float64, not object(string)!
+>
+> print(variants.describe()) \# summary stats for numeric columns
+
+Compare this to Module 6, where you opened the file, used DictReader, and called float() on each value by hand. pandas does all of it. Now you understand what it's doing — that's why we did it manually first.
+
+  -------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 10 → 10A (DataFrame basics & loading): build a DataFrame, load variants.csv, inspect with head/dtypes/describe. Then return.
+  -------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  -------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 10.3 Selecting rows and columns
+
+Three access patterns, each with a clear job:
+
+-   df\["col"\] or df\[\["c1","c2"\]\] — select columns by name.
+
+-   .loc\[rows, cols\] — select by **label** (index value / column name).
+
+-   .iloc\[rows, cols\] — select by **integer position** (0-based), like NumPy.
+
+> variants = pd.read_csv("data/variants.csv")
+>
+> print(variants\["gene"\]) \# the gene column (Series)
+>
+> print(variants.loc\[0, "gene"\]) \# label-based: row 0, gene column
+>
+> print(variants.iloc\[0:2, :\]) \# position-based: first two rows, all cols
+>
+> print(variants\[\["gene", "quality"\]\]) \# two columns
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **loc vs iloc — keep them straight**                                                                                                                                                                                              |
+|                                                                                                                                                                                                                                   |
+| .loc is **l**abel-based and *inclusive* of its endpoint; .iloc is **i**nteger-position-based and *exclusive* like normal slicing. Mixing them up is the most common pandas confusion. When in doubt: names → loc; numbers → iloc. |
++===================================================================================================================================================================================================================================+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 10.4 Filtering with boolean masks
+
+Exactly the NumPy masking you just learned, now on a table. Build a boolean condition on a column, use it to select rows. This is dplyr's filter().
+
+> variants = pd.read_csv("data/variants.csv")
+>
+> high_q = variants\[variants\["quality"\] \>= 40\] \# rows passing the filter
+>
+> print(high_q)
+>
+> \# combine conditions with & (and), \| (or) — parentheses required!
+>
+> gyrA_hq = variants\[(variants\["gene"\] == "gyrA") & (variants\["quality"\] \> 40)\]
+>
+> print(gyrA_hq)
+
+Note the **parentheses around each condition** and the use of &/\| (not and/or) — pandas needs the bitwise operators for element-wise combination, and operator precedence makes the parentheses mandatory. Forgetting them is a classic error.
+
+  ------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 10 → 10B (selection & filtering): loc/iloc practice and boolean filtering of variants. Centrepiece.
+  ------------------------------------------------------------------------------------------------------------------------------------
+
+  ------------------------------------------------------------------------------------------------------------------------------------
+
+## 10.5 Creating and transforming columns
+
+Assign to a new column name to create it; operations are vectorised across the whole column.
+
+> df = pd.read_csv("data/variants.csv")
+>
+> df\["error_prob"\] = 10 \*\* (-df\["quality"\] / 10) \# vectorised, new column
+>
+> df\["pass"\] = df\["quality"\] \>= 40 \# boolean column
+>
+> print(df.head())
+
+For element-wise logic that isn't a simple vector operation, .apply() maps a function over a column — but reach for vectorised operations first, as they're far faster (the same lesson as NumPy).
+
+## 10.6 Grouping and aggregation: groupby
+
+The most powerful idea in pandas, and the direct analogue of R's group_by() %\>% summarise(). Split the table by a key, apply an aggregation to each group, combine the results — "split–apply–combine".
+
+> expr = pd.read_csv("data/expression.csv") \# gene, condition, replicate, tpm
+>
+> \# mean TPM per gene per condition:
+>
+> summary = expr.groupby(\["gene", "condition"\])\["tpm"\].mean()
+>
+> print(summary)
+>
+> \# mean TPM per condition across everything:
+>
+> print(expr.groupby("condition")\["tpm"\].mean())
+
+You can aggregate with mean, sum, count, std, min/max, or several at once with .agg(\[...\]). groupby is how you turn a long table of per-replicate measurements into the per-condition summary you actually report.
+
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **This single tool does a huge amount of real work**                                                                                                                                                                                                                                         |
+|                                                                                                                                                                                                                                                                                              |
+| "Mean coverage per chromosome", "variant count per gene", "mean expression per condition" — all groupby one-liners. When you catch yourself about to loop over unique values of a column and accumulate results, that's a groupby. Mastering it is the highest-leverage skill in the module. |
++==============================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 10 → 10C (groupby): summarise the expression table per gene and per condition. Then return.                                                                                                                                                                   |
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 10.7 Reshaping, sorting, merging — briefly
+
+A few more tools you'll meet constantly:
+
+-   .sort_values("col") — sort rows by a column (add ascending=False for descending).
+
+-   .pivot_table(...) — reshape long↔wide, like R's pivot_wider; e.g. genes as rows, conditions as columns.
+
+-   pd.merge(df1, df2, on="gene") — join two tables on a shared key, like a SQL join or dplyr's left_join.
+
+-   .to_csv("out.csv", index=False) — write the table back out.
+
+You don't need to memorise these now; recognise that they exist and look them up when a task calls for them. The exercises introduce sorting and a pivot so you've seen the pattern.
+
+## 10.8 Where pandas fits
+
+pandas is your default for any labelled, tabular, mixed-type data — which is most bioinformatics results: variant tables, expression matrices, annotation files, sample sheets. It reads and writes every common format, filters and groups effortlessly, and hands its data straight to plotting (Module 11) and to Biopython where needed. Combined with NumPy underneath, it replaces the bulk of the manual file-and-loop code you wrote in Part II — now that you know what that code was doing.
+
+  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do the Module 10 challenge: a full expression analysis — load, filter, create a fold-change column via pivot, group, sort, and write the result to a new CSV. This is a realistic mini-pipeline.
+  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Module 11 — Visualisation: matplotlib & seaborn
+
+A plot is how you understand your data and how you communicate it. matplotlib is the foundational plotting library — verbose but total control, comparable to base R graphics or MATLAB's plotting. seaborn sits on top, giving you attractive statistical plots in one line, much closer to ggplot2. You'll use both: seaborn for speed, matplotlib to fine-tune. Estimated: 5 hours.
+
+## 11.1 The anatomy of a matplotlib figure
+
+matplotlib has two layers of API. Learn the **object-oriented** one (figure and axes objects) rather than the implicit plt.plot state-machine style — it scales to multi-panel figures and is what you'll see in good code.
+
+> import matplotlib.pyplot as plt \# universal convention
+>
+> genes = \["rpoB", "katG", "gyrA", "inhA"\]
+>
+> gc = \[0.53, 0.61, 0.58, 0.49\]
+>
+> fig, ax = plt.subplots(figsize=(6, 4)) \# one figure, one axes
+>
+> ax.bar(genes, gc, color="steelblue")
+>
+> ax.set_xlabel("Gene")
+>
+> ax.set_ylabel("GC content")
+>
+> ax.set_title("GC content per gene")
+>
+> ax.set_ylim(0, 1)
+>
+> fig.tight_layout()
+>
+> fig.savefig("gc_barplot.png", dpi=150) \# save to file
+>
+> plt.show()
+
+The pattern is always the same: fig, ax = plt.subplots() creates the canvas; you call methods on ax to draw and label; fig.savefig() writes it out. ax.set_xlabel, set_ylabel, set_title are your labelling trio.
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **In a notebook vs a script**                                                                                                                                                                                                                                                                                |
+|                                                                                                                                                                                                                                                                                                              |
+| In a Jupyter notebook, plots display inline automatically — you often don't even need plt.show(). In a .py script, plt.show() opens a window, or use fig.savefig() to write a file (the usual choice for pipelines that generate report figures). Always savefig before show — showing can clear the figure. |
++==============================================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 11 → 11A (matplotlib basics): a labelled bar chart of GC content and a histogram of quality scores, saved to PNG. Then return.                                                                                                                                                |
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 11.2 The common plot types
+
+  -----------------------------------------------------------------------------------------
+  **Method on ax**        **Plot**                **Bioinformatics use**
+  ----------------------- ----------------------- -----------------------------------------
+  ax.bar(x, h)            bar chart               counts/values per category (genes)
+
+  ax.hist(data)           histogram               distribution of quality scores, lengths
+
+  ax.scatter(x, y)        scatter                 expression A vs B, length vs GC
+
+  ax.plot(x, y)           line                    coverage along a genome, time series
+
+  ax.boxplot(data)        box plot                expression spread per condition
+  -----------------------------------------------------------------------------------------
+
+A histogram of per-read quality, a scatter of log2 fold-change vs mean expression (the makings of an MA plot), a bar chart of variant counts per gene — these are daily-use plots, and each is one method call plus labels.
+
+## 11.3 seaborn: statistical plots from DataFrames
+
+seaborn takes a pandas DataFrame and column names and produces a polished plot in one call, handling grouping and colour automatically. This is the ggplot2-like experience: you describe the mapping (x, y, hue), it does the rest.
+
+> import seaborn as sns
+>
+> import pandas as pd
+>
+> expr = pd.read_csv("data/expression.csv")
+>
+> \# box plot of TPM per condition, coloured by condition, in one line:
+>
+> ax = sns.boxplot(data=expr, x="condition", y="tpm")
+>
+> ax.set_title("Expression by condition")
+>
+> \# grouped bar: mean TPM per gene, split by condition
+>
+> ax = sns.barplot(data=expr, x="gene", y="tpm", hue="condition")
+
+The data=, x=, y=, hue= interface is the heart of seaborn and maps directly onto ggplot2's aesthetics. Because it reads DataFrames natively, seaborn pairs perfectly with the pandas you just learned: filter and group your table, then hand it to seaborn to plot. Most figures in a modern bioinformatics paper could be made this way.
+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **seaborn returns a matplotlib axes**                                                                                                                                                                                                                                              |
+|                                                                                                                                                                                                                                                                                    |
+| Every seaborn call returns a matplotlib ax, so you can fine-tune with the matplotlib methods from 11.1 — ax.set_title(), ax.set_ylim(), etc. The two libraries are layers of one system, not competitors. Use seaborn to get 90% of the way fast, matplotlib for the final polish. |
++====================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 11 → 11B (seaborn from DataFrames): box plot and grouped bar plot of the expression table, then customise with matplotlib. Then tackle the module challenge: a small multi-panel figure combining a histogram and a scatter.                        |
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 11.4 Where visualisation fits
+
+Plotting is the end of most analysis pipelines: load with pandas, compute with pandas/NumPy, visualise with seaborn/matplotlib, save the figure. You now have that whole chain. The habit to build is to *plot early and often* while exploring — a histogram of your quality scores or a scatter of two conditions reveals problems and patterns that summary statistics hide. Module 12 adds the last piece: handling real sequence data with Biopython.
+
+# Module 12 — Biopython: the field's standard library
+
+Biopython is the community-standard toolkit for biological computation in Python. It handles sequence objects, file formats (FASTA, FASTQ, GenBank, and dozens more), translation with real codon tables, alignments, and even querying online databases like NCBI. You've already built miniature versions of its core — your Sequence class, your FASTA parser — so you'll recognise the design immediately and appreciate what it saves you. Estimated: 8 hours.
+
+## 12.1 The Seq object
+
+Biopython's Seq is your Sequence class, done properly. It behaves like a string (slicing, len) but adds biological methods.
+
+> from Bio.Seq import Seq
+>
+> dna = Seq("ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG")
+>
+> print(len(dna)) \# length, like a string
+>
+> print(dna\[0:3\]) \# ATG — slicing works
+>
+> print(dna.complement()) \# complement
+>
+> print(dna.reverse_complement()) \# the operation you hand-coded!
+>
+> print(dna.transcribe()) \# DNA -\> RNA (T -\> U)
+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Everything you built, now correct and complete**                                                                                                                                                                                                                                                                                 |
+|                                                                                                                                                                                                                                                                                                                                    |
+| Your Part I reverse_complement handled A/C/G/T. Biopython's handles ambiguity codes (N, R, Y...), RNA, and edge cases you didn't think of. The point of building your own first wasn't to compete — it was so that dna.reverse_complement() is transparent to you, not magic. You know exactly what it does because you wrote one. |
++====================================================================================================================================================================================================================================================================================================================================+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 12.2 Translation with real codon tables
+
+In Part I you translated with a hand-built dictionary of a few codons. Biopython ships every NCBI codon table, including alternative genetic codes (mitochondrial, bacterial).
+
+> from Bio.Seq import Seq
+>
+> cds = Seq("ATGGCCATTGTAATGGGCCGCTGA")
+>
+> protein = cds.translate() \# uses standard genetic code
+>
+> print(protein) \# MAIVMGR\* (\* = stop)
+>
+> \# bacterial table (table 11), stop at first stop codon:
+>
+> protein = cds.translate(table=11, to_stop=True)
+>
+> print(protein) \# MAIVMGR
+
+The table= argument selects the genetic code (11 is the bacterial/archaeal code — directly relevant to *Salmonella* and *Mycobacterium* work), and to_stop=True trims at the first stop codon. This is the real translation you approximated by hand.
+
+  ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 12 → 12A (Seq objects & translation): create Seq objects, take reverse complements, translate with the bacterial table. Then return.
+  ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 12.3 Reading files with SeqIO
+
+Module 6 had you write a FASTA parser by hand, including the fiddly last-record bug. Bio.SeqIO replaces all of it — and reads FASTQ, GenBank, and more through the same interface, just by changing the format string.
+
+> from Bio import SeqIO
+>
+> \# iterate over every record in a FASTA file:
+>
+> for record in SeqIO.parse("data/sample.fasta", "fasta"):
+>
+> print(record.id) \# the header ID
+>
+> print(len(record.seq)) \# the sequence length
+>
+> gc = 100 \* (record.seq.count("G") + record.seq.count("C")) / len(record.seq)
+>
+> print(f" GC: {gc:.1f}%")
+>
+> \# read FASTQ — same call, different format string:
+>
+> for record in SeqIO.parse("data/sample.fastq", "fastq"):
+>
+> quals = record.letter_annotations\["phred_quality"\] \# decoded for you!
+>
+> print(record.id, "mean Q:", sum(quals) / len(quals))
+
+Each record is a SeqRecord — a Seq plus metadata (id, description, and for FASTQ the decoded Phred scores in letter_annotations). Note Biopython **decodes the quality scores for you**: no more ord(c) - 33. This is exactly your Part II FastqRead class, fully realised — and it's why we built that class first.
+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **SeqIO.parse vs SeqIO.read**                                                                                                                                                                                                      |
+|                                                                                                                                                                                                                                    |
+| SeqIO.parse returns an iterator over *many* records (use it in a for loop). SeqIO.read is for a file with exactly *one* record and returns it directly. Using read on a multi-record file raises an error — a useful safety check. |
++====================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 12 → 12B (SeqIO reading): parse sample.fasta and sample.fastq with SeqIO, computing GC and mean quality. Compare how much shorter this is than your Module 6 code.                                  |
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 12.4 Writing files & format conversion
+
+SeqIO.write saves records, and converting between formats is a one-liner — a genuinely common real-world task.
+
+> from Bio import SeqIO
+>
+> from Bio.Seq import Seq
+>
+> from Bio.SeqRecord import SeqRecord
+>
+> \# build records and write a FASTA:
+>
+> records = \[
+>
+> SeqRecord(Seq("ATGCGT"), id="gene1", description="example"),
+>
+> SeqRecord(Seq("GGCCTA"), id="gene2", description="example"),
+>
+> \]
+>
+> SeqIO.write(records, "output.fasta", "fasta")
+>
+> \# convert FASTQ -\> FASTA in one line:
+>
+> SeqIO.convert("data/sample.fastq", "fastq", "reads.fasta", "fasta")
+
+## 12.5 A taste of the rest
+
+Biopython is large. You don't need it all, but know these exist for when a task arises:
+
+-   Bio.Align / pairwise alignment — align two sequences, score them.
+
+-   Bio.Entrez — query NCBI databases (fetch a GenBank record by accession) programmatically. Requires an email and respectful rate limits.
+
+-   Bio.Restriction — restriction enzyme analysis (cut sites, digests).
+
+-   Bio.SeqUtils — ready-made GC content, melting temperature, molecular weight, and more.
+
+When you need one, the Biopython tutorial and cookbook are excellent. The skill now is knowing the library exists and roughly what's in it, so you reach for it instead of reinventing — except when, as in this course, reinventing once is how you learn.
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Don't query NCBI in a tight loop**                                                                                                                                                                                                                                                          |
+|                                                                                                                                                                                                                                                                                               |
+| If you use Bio.Entrez to fetch from NCBI, batch your requests and respect the rate limits (and set Entrez.email). Hammering their servers with thousands of rapid requests can get your IP blocked. This is the one place in Biopython where carelessness affects more than your own machine. |
++===============================================================================================================================================================================================================================================================================================+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 12.6 Where Part III leaves you
+
+You now command the full working toolkit: NumPy for array maths, pandas for tables, matplotlib/seaborn for figures, and Biopython for sequences and formats. You can load a real dataset, clean and summarise it, visualise it, and handle the sequence files the field runs on. Crucially, because you built simplified versions of these tools by hand in Parts I–II, none of it is a black box — you know what read_csv and reverse_complement() and SeqIO.parse are doing under the hood.
+
+That combination — fluency with the standard tools *plus* understanding of what they do — is exactly what separates someone who can copy a tutorial from someone who can build something new. Part IV turns you toward that: idiomatic Python (comprehensions, generators, decorators), then Git and GitHub and project structure, and finally your capstone — designing, building, testing, and releasing a tool of your own. That is where we'll choose what to build, now that you can judge for yourself what's both useful and achievable.
+
+  ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do the Part III capstone: an end-to-end mini-pipeline — read sequences with SeqIO, build a pandas table of per-sequence stats (length, GC, translation), summarise it, and produce a figure. This rehearses the exact workflow your capstone tool will use.
+  ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+

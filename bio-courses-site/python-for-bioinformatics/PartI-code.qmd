@@ -1,0 +1,2548 @@
+---
+title: "Part I — Foundations — Exercises"
+---
+
+Download the notebooks: [exercises](../downloads/python/py_PartI_exercises.ipynb) · [solutions](../downloads/python/py_PartI_solutions.ipynb). Example data is in [downloads/python/data](../downloads/python/data).
+
+::: {.panel-tabset}
+
+## Exercises
+
+<div id="5ef7364c" class="cell markdown">
+
+# Python for Bioinformatics — Part I Exercises
+
+## Modules 1–5 · Foundations
+
+Work through this notebook **alongside the theory document**, in order. When the theory says *"▶ Practise now — do Module 2 → 2A"*, that means come here and do section 2A before reading on.
+
+**Format.** Each section opens with a worked example to run and study, then an *easy* exercise, then *harder* ones, and sometimes a *challenge*. Write your code in the empty cells (`Shift+Enter` to run). Only open the solutions notebook after you have tried.
+
+Everything uses a bioinformatics context. No external packages are needed for Part I — plain Python only.
+
+</div>
+
+<div id="f843beb1" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Exercise 0 — Confirm your setup
+
+Run the cell below. If it prints your Python version and "ready", your `biopy` environment and kernel are correctly connected. (Biopython isn't used until Part III, so don't worry if you skipped installing it — the core check is that Python runs.)
+
+</div>
+
+<div id="1fb71c48" class="cell code" execution_count="1">
+
+``` python
+import sys
+print("Python:", sys.version.split()[0])
+print("ready")
+```
+
+<div class="output stream stdout">
+
+    Python: 3.12.13
+    ready
+
+</div>
+
+</div>
+
+<div id="44e82e86" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 1 — Syntax, types, f-strings
+
+</div>
+
+<div id="9647aff7" class="cell markdown">
+
+## 1A. Output and f-strings
+
+### Worked example
+
+</div>
+
+<div id="d1ba9942" class="cell code" execution_count="2">
+
+``` python
+gene_name = "rpoB"
+length_bp = 3534
+gc_content = 0.5237
+print(f"Gene {gene_name}: {length_bp} bp, GC = {gc_content:.2%}")
+```
+
+<div class="output stream stdout">
+
+    Gene rpoB: 3534 bp, GC = 52.37%
+
+</div>
+
+</div>
+
+<div id="06f198db" class="cell markdown">
+
+### 1A.1 (easy)
+
+Make variables `gene_name` (str), `length_bp` (int), `protein_length` (int). Print one sentence with an f-string, e.g. `katG encodes a protein of 740 amino acids (2223 bp).`
+
+</div>
+
+<div id="60bcc924" class="cell code" execution_count="3">
+
+``` python
+# your code here
+gene_name = "katG"
+length_bp = 2223
+protein_length = 740
+print(f"{gene_name} encodes a protein of {protein_length} amino acids ({length_bp} bp).")
+```
+
+<div class="output stream stdout">
+
+    katG encodes a protein of 740 amino acids (2223 bp).
+
+</div>
+
+</div>
+
+<div id="5efcae18" class="cell markdown">
+
+### 1A.2 (harder)
+
+For `length_bp = 2223`, compute the protein length **in code** as `length_bp // 3 - 1` (stop codon isn't an amino acid) and print `2223 bp -> 740 amino acids`.
+
+</div>
+
+<div id="7daad39a" class="cell code" execution_count="4">
+
+``` python
+# your code here
+length_bp = 2223
+protein_length = (length_bp // 3) - 1
+print(f"{length_bp} bp -> {protein_length} amino acids.")
+```
+
+<div class="output stream stdout">
+
+    2223 bp -> 740 amino acids.
+
+</div>
+
+</div>
+
+<div id="57d3e469" class="cell markdown">
+
+## 1B. Types and conversion
+
+### Worked example
+
+</div>
+
+<div id="af4f0751" class="cell code" execution_count="5">
+
+``` python
+count_text = "1287"
+count = int(count_text)
+print(type(count_text), type(count))
+print(f"Doubled: {count * 2}")
+```
+
+<div class="output stream stdout">
+
+    <class 'str'> <class 'int'>
+    Doubled: 2574
+
+</div>
+
+</div>
+
+<div id="b3e2e1fe" class="cell markdown">
+
+### 1B.1 (easy)
+
+`reads_text = "4820000"` and `mapped_text = "4502300"` are strings from a sequencing run. Convert both to int and print the number of mapped reads.
+
+</div>
+
+<div id="e6ddca78" class="cell code" execution_count="6">
+
+``` python
+reads_text = "4820000"
+mapped_text = "4502300"
+# your code here
+reads = int(reads_text)
+mapped_reads = int(mapped_text)
+print(f"mapped reads: {mapped_reads}")
+```
+
+<div class="output stream stdout">
+
+    mapped reads: 4502300
+
+</div>
+
+</div>
+
+<div id="bc277950" class="cell markdown">
+
+### 1B.2 (harder)
+
+Using the same values, compute the **mapping rate** as a percentage with two decimals (`Mapping rate: 93.41%`) and print the type of the rate variable to confirm it's a float.
+
+</div>
+
+<div id="9b6e119c" class="cell code" execution_count="7">
+
+``` python
+reads_text = "4820000"
+mapped_text = "4502300"
+# your code here
+reads = int(reads_text)
+mapped = int(mapped_text)
+mapping_rate = mapped / reads
+print(f"Mapping rate: {mapping_rate: .2%}")
+print(type(mapping_rate))
+```
+
+<div class="output stream stdout">
+
+    Mapping rate:  93.41%
+    <class 'float'>
+
+</div>
+
+</div>
+
+<div id="4682273d" class="cell markdown">
+
+## 1C. Arithmetic & modulo
+
+### Worked example
+
+</div>
+
+<div id="c6981705" class="cell code" execution_count="8">
+
+``` python
+seq_length = 3534
+print(f"Remainder mod 3: {seq_length % 3}")
+print(f"Whole number of codons? {seq_length % 3 == 0}")
+```
+
+<div class="output stream stdout">
+
+    Remainder mod 3: 0
+    Whole number of codons? True
+
+</div>
+
+</div>
+
+<div id="53aba2e7" class="cell markdown">
+
+### 1C.1 (easy)
+
+A fragment is 1000 bp. Using `//` and `%`, print `333 complete codons, 1 leftover base(s)`.
+
+</div>
+
+<div id="e2992a8a" class="cell code" execution_count="9">
+
+``` python
+# your code here
+fragment_length = 1000
+codons = fragment_length // 3
+leftover_bases = fragment_length % 3
+print(f"{codons} complete codons, {leftover_bases} leftover base(s).")
+```
+
+<div class="output stream stdout">
+
+    333 complete codons, 1 leftover base(s).
+
+</div>
+
+</div>
+
+<div id="2bf14216" class="cell markdown">
+
+### 1C.2 (harder)
+
+A plasmid is 4361 bp; average digest fragment ~750 bp. Using `//` and `%`, print `Approx 5 fragments of 750 bp, plus a 611 bp remainder.`
+
+</div>
+
+<div id="b2654b1c" class="cell code" execution_count="10">
+
+``` python
+# your code here
+plasmid = 4361
+av_digest = 750
+fragments = plasmid // av_digest
+remainder = plasmid % av_digest
+print(f"Approx {fragments} fragments of {av_digest} bp, plus a {remainder} bp remainder.")
+# or
+print(f"Approx {plasmid // av_digest} fragments of {av_digest} bp, plus a {plasmid % av_digest} bp remainder.")
+```
+
+<div class="output stream stdout">
+
+    Approx 5 fragments of 750 bp, plus a 611 bp remainder.
+    Approx 5 fragments of 750 bp, plus a 611 bp remainder.
+
+</div>
+
+</div>
+
+<div id="13ab8970" class="cell markdown">
+
+## 1D. Strings & 0-based indexing
+
+### Worked example
+
+</div>
+
+<div id="d77c9b32" class="cell code" execution_count="11">
+
+``` python
+dna = "ATGCGTACGTTAG"
+print(f"Length: {len(dna)}")
+print(f"First base:  {dna[0]}")
+print(f"Last base:   {dna[-1]}")
+```
+
+<div class="output stream stdout">
+
+    Length: 13
+    First base:  A
+    Last base:   G
+
+</div>
+
+</div>
+
+<div id="6e25cc33" class="cell markdown">
+
+### 1D.1 (easy)
+
+For the sequence below, print its length, first base, last base, and the **third** base (index 2).
+
+</div>
+
+<div id="96db886c" class="cell code" execution_count="12">
+
+``` python
+dna = "ATGTTCGGATCC"
+# your code here
+print(f"Length: {len(dna)}")
+print(f"First base: {dna[0]}")
+print(f"Last base: {dna[-1]}")
+print(f"Third base: {dna[2]}")
+```
+
+<div class="output stream stdout">
+
+    Length: 12
+    First base: A
+    Last base: C
+    Third base: G
+
+</div>
+
+</div>
+
+<div id="3c70eb4d" class="cell markdown">
+
+### 1D.2 (challenge)
+
+Given the fields below, produce **one f-string** printing: `NC_011147.1 | Salmonella enterica Paratyphi B | 19 bp | starts A, ends A`
+
+</div>
+
+<div id="932c7b1b" class="cell code" execution_count="13">
+
+``` python
+seq_id   = "NC_011147.1"
+organism = "Salmonella enterica Paratyphi B"
+seq      = "ATGCGTACGTTAGCCGTAA"
+# your code here
+print(f"{seq_id} | {organism} | {len(seq)} bp | starts {seq[0]}, ends {seq[-1]}")
+```
+
+<div class="output stream stdout">
+
+    NC_011147.1 | Salmonella enterica Paratyphi B | 19 bp | starts A, ends A
+
+</div>
+
+</div>
+
+<div id="15af2823" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 2 — Strings & sequences
+
+</div>
+
+<div id="44754618" class="cell markdown">
+
+## 2A. Slicing
+
+### Worked example
+
+</div>
+
+<div id="55ecdaf0" class="cell code" execution_count="14">
+
+``` python
+dna = "ATGCGTACGTTAG"
+print(dna[0:3])    # start codon
+print(dna[:3])     # same
+print(dna[3:])     # from position 3 to end
+print(dna[-3:])    # last three bases
+print(dna[:3] + dna[3:])
+```
+
+<div class="output stream stdout">
+
+    ATG
+    ATG
+    CGTACGTTAG
+    TAG
+    ATGCGTACGTTAG
+
+</div>
+
+</div>
+
+<div id="b6056198" class="cell markdown">
+
+### 2A.1 (easy)
+
+For `mrna = "GGGAUGAAACCCUAGUUU"`, use slicing to print: the first 3 bases (a 5' fragment), the last 3 bases, and bases 4–6 (indices 3,4,5).
+
+</div>
+
+<div id="d967a943" class="cell code" execution_count="15">
+
+``` python
+mrna = "GGGAUGAAACCCUAGUUU"
+# your code here
+print(f"First 3 bases: {mrna[:3]}")
+print(f"Last 3 bases: {mrna[-3:]}")
+print(f"Bases 4-6: {mrna[3:6]}")
+```
+
+<div class="output stream stdout">
+
+    First 3 bases: GGG
+    Last 3 bases: UUU
+    Bases 4-6: AUG
+
+</div>
+
+</div>
+
+<div id="c0d1ab03" class="cell markdown">
+
+### 2A.2 (harder)
+
+A coding sequence is `cds = "ATGAAACCCGGGTAA"`. Slice out the start codon (first 3), the stop codon (last 3), and the internal codons (everything between). Print all three.
+
+</div>
+
+<div id="be595366" class="cell code" execution_count="16">
+
+``` python
+cds = "ATGAAACCCGGGTAA"
+# your code here
+start = cds[:3]
+stop = cds[-3:]
+internal = cds[3:-3]
+
+print(f"Start codon: {start}")
+print(f"Stop codon: {stop}")
+print(f"Intenal codon: {internal}")
+
+# some extra discovery excercises
+print(f"Full sequence: {start + internal + stop}")
+print(f"Check: {cds == start+internal+stop}")
+```
+
+<div class="output stream stdout">
+
+    Start codon: ATG
+    Stop codon: TAA
+    Intenal codon: AAACCCGGG
+    Full sequence: ATGAAACCCGGGTAA
+    Check: True
+
+</div>
+
+</div>
+
+<div id="62fb2cca" class="cell markdown">
+
+## 2B. Methods & GC content
+
+### Worked example
+
+</div>
+
+<div id="f6ffad1e" class="cell code" execution_count="17">
+
+``` python
+seq = "atgcGTACgt"
+seq = seq.upper()
+gc = seq.count("G") + seq.count("C")
+print(f"GC fraction: {gc / len(seq):.2%}")
+```
+
+<div class="output stream stdout">
+
+    GC fraction: 50.00%
+
+</div>
+
+</div>
+
+<div id="3f48fd96" class="cell markdown">
+
+### 2B.1 (easy)
+
+For `seq = "ATGCGCGCGTAT"`, count each of A, C, G, T with `.count()` and print all four counts.
+
+</div>
+
+<div id="ca889478" class="cell code" execution_count="18">
+
+``` python
+seq = "ATGCGCGCGTAT"
+# your code here
+a = seq.count("A")
+t = seq.count("T")
+c = seq.count("C")
+g = seq.count("G")
+print(f"A: {a}")
+print(f"C: {c}")
+print(f"G: {g}")
+print(f"T: {t}")
+```
+
+<div class="output stream stdout">
+
+    A: 2
+    C: 3
+    G: 4
+    T: 3
+
+</div>
+
+</div>
+
+<div id="9efb82f8" class="cell markdown">
+
+### 2B.2 (harder)
+
+Transcription turns DNA into RNA by replacing T with U. For `dna = "ATGCGTACG"`, produce the mRNA with `.replace()` and print it. Then, separately, compute and print the GC content of the original DNA as a percentage (`66.67%`-style).
+
+</div>
+
+<div id="db0c8461" class="cell code" execution_count="19">
+
+``` python
+dna = "ATGCGTACG"
+# your code here
+
+rna = dna.replace("T", "U")
+gc = dna.count("G") + dna.count("C")
+
+print(f"The GC-content in the RNA sequence {rna} is equal to {gc/len(rna): .2%}")
+```
+
+<div class="output stream stdout">
+
+    The GC-content in the RNA sequence AUGCGUACG is equal to  55.56%
+
+</div>
+
+</div>
+
+<div id="de5e7012" class="cell markdown">
+
+## 2C. Reverse complement (centrepiece)
+
+### Worked example
+
+</div>
+
+<div id="0f05aa13" class="cell code" execution_count="20">
+
+``` python
+dna = "ATGCGT"
+rc = dna.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+print(rc)   # ACGCAT
+```
+
+<div class="output stream stdout">
+
+    ACGCAT
+
+</div>
+
+</div>
+
+<div id="97e5ad75" class="cell markdown">
+
+### 2C.1 (easy)
+
+Use the `translate` + `[::-1]` approach to print the reverse complement of `"GGGTTTAAACCC"`.
+
+</div>
+
+<div id="fa153423" class="cell code" execution_count="21">
+
+``` python
+dna = "GGGTTTAAACCC"
+# your code here
+compl = dna.translate(str.maketrans("ACGT", "TGCA"))
+rv_comp = compl[::-1]
+
+print(f" The reverse complement of the sequence 5-{dna}-3 is equal to the sequence 5-{rv_comp}-3. This is a palindromic sequence")
+```
+
+<div class="output stream stdout">
+
+     The reverse complement of the sequence 5-GGGTTTAAACCC-3 is equal to the sequence 5-GGGTTTAAACCC-3. This is a palindromic sequence
+
+</div>
+
+</div>
+
+<div id="2cc5f095" class="cell markdown">
+
+### 2C.2 (harder — see the bug)
+
+Try to build a complement by **chaining `.replace()`**: `dna.replace("A","T").replace("T","A").replace("G","C").replace("C","G")` on `"ATGC"`. Print the result and explain (in a comment) why it is wrong. Then print the **correct** reverse complement using `translate`.
+
+</div>
+
+<div id="ad377bef" class="cell code" execution_count="22">
+
+``` python
+dna = "ATGC"
+# your code here — show the broken version and the correct one
+chain_rev_compl = dna.replace("A", "T").replace("C", "G").replace("G", "C").replace("T", "A")[::-1]
+rv_comp = dna.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+print(f"The chaining method with .replace doesn't result in the same sequence for the result complement as the .translate method.")
+print(f"This can be seen if you look close to these sequences. {chain_rev_compl} is not the same as {rv_comp}")
+```
+
+<div class="output stream stdout">
+
+    The chaining method with .replace doesn't result in the same sequence for the result complement as the .translate method.
+    This can be seen if you look close to these sequences. CCAA is not the same as GCAT
+
+</div>
+
+</div>
+
+<div id="23ffd718" class="cell markdown">
+
+### 2C.3 (challenge — start-codon scanner)
+
+For `seq = "CCATGCCCATGTAA"`, use `.find("ATG")` to print the index of the **first** ATG. Bonus: use a loop (peek ahead to Module 3 if needed, or come back after) to find **all** ATG start positions. For now, just the first is fine.
+
+</div>
+
+<div id="976fc922" class="cell code" execution_count="23">
+
+``` python
+seq = "CCATGCCCATGTAA"
+# your code here
+ind = seq.find("ATG")
+print(f"The first start codon can be found in index {ind} as {seq[ind:ind+3]}")
+
+#Extra: loop
+positions = [i for i in range(len(seq)-2) if seq[i:i+3] == "ATG"]
+print(f"All indexis for start codons: {positions}")
+print(f"These indexis have the ORF: {[seq[i:] for i in positions]}")
+```
+
+<div class="output stream stdout">
+
+    The first start codon can be found in index 2 as ATG
+    All indexis for start codons: [2, 8]
+    These indexis have the ORF: ['ATGCCCATGTAA', 'ATGTAA']
+
+</div>
+
+</div>
+
+<div id="7ad5a886" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 3 — Control flow
+
+</div>
+
+<div id="5509e255" class="cell markdown">
+
+## 3A. Conditionals
+
+### Worked example
+
+</div>
+
+<div id="023289a9" class="cell code" execution_count="24">
+
+``` python
+gc = 0.62
+if gc > 0.6:
+    category = "GC-rich"
+elif gc < 0.4:
+    category = "AT-rich"
+else:
+    category = "balanced"
+print(category)
+```
+
+<div class="output stream stdout">
+
+    GC-rich
+
+</div>
+
+</div>
+
+<div id="68bcb56f" class="cell markdown">
+
+### 3A.1 (easy)
+
+For a given `gc` value, print `"GC-rich"`, `"AT-rich"`, or `"balanced"` using if/elif/else. Test it by changing `gc`.
+
+</div>
+
+<div id="33c3adff" class="cell code" execution_count="25">
+
+``` python
+gc = 0.4
+# your code here
+if gc > 0.6:
+    print("GC-rich")
+elif gc < 0.4:
+    print("AT-rich")
+else:
+    print("balanced")
+```
+
+<div class="output stream stdout">
+
+    balanced
+
+</div>
+
+</div>
+
+<div id="46b61aaf" class="cell markdown">
+
+### 3A.2 (harder — chained comparison + and)
+
+A sequence is a *good gene candidate* if `length > 1000` **and** `0.4 <= gc <= 0.6`. For `length = 1500, gc = 0.55`, print whether it's a candidate. Use a chained comparison and `and`.
+
+</div>
+
+<div id="26a11739" class="cell code" execution_count="26">
+
+``` python
+length = 1500
+gc = 0.55
+# your code here
+if (length > 1000) and (0.4 <= gc <= 0.6):
+    print("good candidate gene")
+else:
+    print("not a good candidate gene")
+```
+
+<div class="output stream stdout">
+
+    good candidate gene
+
+</div>
+
+</div>
+
+<div id="791ecef8" class="cell markdown">
+
+## 3B. for loops
+
+### Worked example
+
+</div>
+
+<div id="876b3357" class="cell code" execution_count="27">
+
+``` python
+dna = "ATGC"
+for base in dna:
+    print(base)
+
+for i in range(0, 6, 2):
+    print("step", i)
+```
+
+<div class="output stream stdout">
+
+    A
+    T
+    G
+    C
+    step 0
+    step 2
+    step 4
+
+</div>
+
+</div>
+
+<div id="244ea2ab" class="cell markdown">
+
+### 3B.1 (easy — count by iterating)
+
+Count the number of G **and** C bases in `seq = "ATGCGCGTAT"` by looping over each base with a `for` loop and an `if` (do **not** use `.count()` here — the point is to practise loops).
+
+</div>
+
+<div id="350bd4b3" class="cell code" execution_count="28">
+
+``` python
+seq = "ATGCGCGTAT"
+# your code here
+gc = 0
+for base in seq:
+    if base == "G" or base == "C":
+        gc += 1
+print(gc)   
+```
+
+<div class="output stream stdout">
+
+    5
+
+</div>
+
+</div>
+
+<div id="afedd6cf" class="cell markdown">
+
+### 3B.2 (harder — codon walker)
+
+For `cds = "ATGAAACCCGGGTAA"`, loop with `range(0, len(cds), 3)` and print each codon on its own line, with its position, e.g. `0: ATG`.
+
+</div>
+
+<div id="571971c3" class="cell code" execution_count="29">
+
+``` python
+cds = "ATGAAACCCGGGTAA"
+# your code here
+
+for i in range(0, len(cds), 3):
+    print(f"{i}: {cds[i:i+3]}")
+```
+
+<div class="output stream stdout">
+
+    0: ATG
+    3: AAA
+    6: CCC
+    9: GGG
+    12: TAA
+
+</div>
+
+</div>
+
+<div id="42ca5d2c" class="cell markdown">
+
+## 3C. while, break, continue
+
+### Worked example
+
+</div>
+
+<div id="33c7ce0f" class="cell code" execution_count="30">
+
+``` python
+seq = "ATGAAATAGCCCTAATGATAATAG"
+i = 0
+while i < len(seq) - 2:
+    codon = seq[i:i+3]
+    if codon in ("TAA", "TAG", "TGA"):
+        print(f"Stop {codon} at {i}")
+        i += 3
+        continue
+    i += 3
+```
+
+<div class="output stream stdout">
+
+    Stop TAG at 6
+    Stop TAA at 12
+    Stop TGA at 15
+    Stop TAA at 18
+    Stop TAG at 21
+
+</div>
+
+</div>
+
+<div id="5eec20ae" class="cell markdown">
+
+### 3C.1 (easy)
+
+For `seq = "ATGAAACCCTAA"`, scan in frame (step 3) with a `while` loop and print the position of the first stop codon (TAA/TAG/TGA).
+
+</div>
+
+<div id="f87a2022" class="cell code" execution_count="31">
+
+``` python
+seq = "ATGAAACCCTAATAG"
+# your code here
+i = 0
+while i < len(seq)-2:
+    codon = seq[i:i+3]
+    if codon in ("TAA", "TAG", "TGA"):
+        print(f"First stop codon: {codon} at index {i}.")
+        break
+    i += 3
+```
+
+<div class="output stream stdout">
+
+    First stop codon: TAA at index 9.
+
+</div>
+
+</div>
+
+<div id="956b1d79" class="cell markdown">
+
+### 3C.2 (challenge — minimal ORF finder)
+
+For `seq = "CCCATGAAACCCGGGTAACC"`:
+
+1.  find the first `ATG` with `.find()`,
+2.  from there, walk codon by codon (step 3) until you hit a stop codon (TAA/TAG/TGA),
+3.  print the ORF (from the ATG up to and including the stop codon).
+
+Expected ORF: `ATGAAACCCGGGTAA`.
+
+</div>
+
+<div id="d983ad7b" class="cell code" execution_count="32">
+
+``` python
+seq = "CCCATGAAACCCGGGTAACC"
+# your code here
+start = seq.find("ATG")
+i = start
+while i <= len(seq)-2:
+    codon = seq[i:i+3]
+    if codon in ("TAA", "TAG", "TGA"):
+        print(f"ORF: {seq[start:i+3]}")
+        break
+    i += 3   
+```
+
+<div class="output stream stdout">
+
+    ORF: ATGAAACCCGGGTAA
+
+</div>
+
+</div>
+
+<div id="66e29904" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 4 — Data structures
+
+</div>
+
+<div id="0ac55cac" class="cell markdown">
+
+## 4A. Lists
+
+### Worked example
+
+</div>
+
+<div id="496f78aa" class="cell code" execution_count="33">
+
+``` python
+genes = ["rpoB", "katG", "gyrA"]
+genes.append("inhA")
+genes[0] = "rpoB_v2"
+print(genes, len(genes), genes[-1])
+```
+
+<div class="output stream stdout">
+
+    ['rpoB_v2', 'katG', 'gyrA', 'inhA'] 4 inhA
+
+</div>
+
+</div>
+
+<div id="7405816b" class="cell markdown">
+
+### 4A.1 (easy)
+
+Start with `genes = ["dnaA", "gyrB"]`. Append `"recA"`, change the first element to `"dnaA_mut"`, and print the final list plus its length.
+
+</div>
+
+<div id="d6447ca4" class="cell code" execution_count="34">
+
+``` python
+genes = ["dnaA", "gyrB"]
+# your code here
+genes.append("recA")
+genes[0] = "dnaA_mut"
+
+print(genes, len(genes))
+```
+
+<div class="output stream stdout">
+
+    ['dnaA_mut', 'gyrB', 'recA'] 3
+
+</div>
+
+</div>
+
+<div id="de765aa9" class="cell markdown">
+
+### 4A.2 (harder — see the aliasing bug)
+
+Run this and observe: assign `b = a`, append to `b`, then print `a`. Why did `a` change? Then fix it: make `c = a.copy()`, append to `c`, and show `a` is now unaffected. Add a comment explaining the difference.
+
+</div>
+
+<div id="1984037f" class="cell code" execution_count="35">
+
+``` python
+a = ["rpoB", "katG"]
+# your code here — reproduce the bug, then the fix
+b = a
+c = a.copy()
+b.append("dnaA")
+c.append("gyrB")
+print(a, c)
+```
+
+<div class="output stream stdout">
+
+    ['rpoB', 'katG', 'dnaA'] ['rpoB', 'katG', 'gyrB']
+
+</div>
+
+</div>
+
+<div id="b0b19ab0" class="cell markdown">
+
+## 4B. Dictionaries (most important)
+
+### Worked example
+
+</div>
+
+<div id="d848463d" class="cell code" execution_count="36">
+
+``` python
+counts = {}
+for base in "ATGCGCAT":
+    counts[base] = counts.get(base, 0) + 1
+print(counts)
+
+codon_table = {"ATG": "M", "TGG": "W", "TAA": "*"}
+print(codon_table["ATG"])
+```
+
+<div class="output stream stdout">
+
+    {'A': 2, 'T': 2, 'G': 2, 'C': 2}
+    M
+
+</div>
+
+</div>
+
+<div id="355e29e6" class="cell markdown">
+
+### 4B.1 (easy — base frequency counter)
+
+Using a dict and `.get()`, count every base in `seq = "AATTTGCGCGCGAT"` and print the dictionary.
+
+</div>
+
+<div id="c04d12e2" class="cell code" execution_count="37">
+
+``` python
+seq = "AATTTGCGCGCGAT"
+# your code here
+counts = {}
+for base in seq:
+    counts[base] = counts.get(base, 0) + 1
+print(counts)
+```
+
+<div class="output stream stdout">
+
+    {'A': 3, 'T': 4, 'G': 4, 'C': 3}
+
+</div>
+
+</div>
+
+<div id="8f940fab" class="cell markdown">
+
+### 4B.2 (harder — translate with a codon table)
+
+Use this (partial) codon table to translate `cds = "ATGAAATGG"` codon by codon into a protein string. Loop in steps of 3, look up each codon, and concatenate the amino acids. Expected: `MKW`.
+
+</div>
+
+<div id="c59666c4" class="cell code" execution_count="38">
+
+``` python
+codon_table = {
+    "ATG": "M", "AAA": "K", "TGG": "W",
+    "TAA": "*", "TAG": "*", "TGA": "*",
+}
+cds = "ATGAAATGG"
+# your code here
+prot = ""
+i = 0
+while i < len(cds)-2:
+    codon = cds[i:i+3]
+    prot += codon_table.get(codon)
+    i += 3
+    continue
+print(prot)
+
+# or
+
+prot = ""
+for i in range(0, len(cds), 3):
+    prot += codon_table.get(cds[i:i+3])
+print(prot)
+```
+
+<div class="output stream stdout">
+
+    MKW
+    MKW
+
+</div>
+
+</div>
+
+<div id="591f6441" class="cell markdown">
+
+## 4C. Sets
+
+### Worked example
+
+</div>
+
+<div id="a9e4a373" class="cell code" execution_count="39">
+
+``` python
+print(set("ATGCGTAAAT"))            # unique bases
+s1 = {"rpoB", "katG", "gyrA"}
+s2 = {"katG", "gyrA", "inhA"}
+print(s1 & s2, s1 | s2, s1 - s2)
+```
+
+<div class="output stream stdout">
+
+    {'A', 'G', 'T', 'C'}
+    {'katG', 'gyrA'} {'katG', 'rpoB', 'inhA', 'gyrA'} {'rpoB'}
+
+</div>
+
+</div>
+
+<div id="a33b7b35" class="cell markdown">
+
+### 4C.1 (easy — validate a sequence)
+
+Write code that prints `True` if every character in `seq` is a valid DNA base (A/C/G/T), else `False`. Test it on `"ATGCGT"` (valid) and `"ATGXYZ"` (invalid). Hint: `set(seq) <= {"A","C","G","T"}`.
+
+</div>
+
+<div id="0b665a49" class="cell code" execution_count="40">
+
+``` python
+# your code here — test both sequences
+seq = ("ATGCGT","ATGXYZ")
+
+for s in seq:
+    print(set(s) <= set("ACGT"))
+    continue
+```
+
+<div class="output stream stdout">
+
+    True
+    False
+
+</div>
+
+</div>
+
+<div id="438f392b" class="cell markdown">
+
+### 4C.2 (harder — compare two samples)
+
+Two samples detected these resistance genes. Print: the genes found in **both**, the genes in **either**, and the genes **unique to sample 1**.
+
+</div>
+
+<div id="1167e7da" class="cell code" execution_count="41">
+
+``` python
+sample1 = {"rpoB", "katG", "gyrA", "embB"}
+sample2 = {"katG", "gyrA", "inhA", "pncA"}
+# your code here
+print(sample1 & sample2, sample1 | sample2, sample1 - sample2)
+```
+
+<div class="output stream stdout">
+
+    {'katG', 'gyrA'} {'katG', 'rpoB', 'gyrA', 'embB', 'inhA', 'pncA'} {'rpoB', 'embB'}
+
+</div>
+
+</div>
+
+<div id="64bbe223" class="cell markdown">
+
+### Module 4 CHALLENGE — base-composition report
+
+For `seq = "ATGCGCGTATTACCGGGCAT"` write code that:
+
+1.  validates it's all A/C/G/T (using a set), printing a warning if not,
+2.  counts each base (using a dict + `.get()`),
+3.  computes GC content,
+4.  prints a tidy multi-line report.
+
+This combines list/dict/set thinking. Take your time.
+
+</div>
+
+<div id="79c3821f" class="cell code" execution_count="42">
+
+``` python
+seq = "ATGCGCGTATTACCGGGCAT"
+# your code here
+if set(seq) <= set("ACGT"):
+    print("All A/C/G/T")
+    counts = {} #dict
+    for base in seq:
+        counts[base] = counts.get(base, 0) + 1
+    gc_content = (counts["G"] + counts["C"])/len(seq)
+    print(f"The sequence has a GC-content of {gc_content:.2%} with {counts["A"]} A\'s, {counts["C"]} C\'s, {counts["G"]} G\'s and {counts["T"]} T\'s.")
+else:
+    print("Warning: not all A/C/G/T!")
+```
+
+<div class="output stream stdout">
+
+    All A/C/G/T
+    The sequence has a GC-content of 55.00% with 4 A's, 5 C's, 6 G's and 5 T's.
+
+</div>
+
+</div>
+
+<div id="a13339a8" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 5 — Functions, scope, modules
+
+</div>
+
+<div id="da6cefe0" class="cell markdown">
+
+## 5A. Basic functions
+
+### Worked example
+
+</div>
+
+<div id="c91714c3" class="cell code" execution_count="43">
+
+``` python
+def gc_content(seq):
+    """Return the GC fraction of a DNA sequence."""
+    seq = seq.upper()
+    return (seq.count("G") + seq.count("C")) / len(seq)
+
+print(gc_content("ATGCGC"))
+help(gc_content)
+```
+
+<div class="output stream stdout">
+
+    0.6666666666666666
+    Help on function gc_content in module __main__:
+
+    gc_content(seq)
+        Return the GC fraction of a DNA sequence.
+
+</div>
+
+</div>
+
+<div id="238846b3" class="cell markdown">
+
+### 5A.1 (easy)
+
+Write a function `seq_length(seq)` that returns the length of a sequence, with a docstring. Call it on `"ATGCGT"`.
+
+</div>
+
+<div id="7a12b73c" class="cell code" execution_count="44">
+
+``` python
+# your code here
+def seq_length(seq):
+    """Return the length of a DNA sequence"""
+    return len(seq)
+
+print(f"Length: {seq_length("ATGCGT")}")
+help(seq_length)
+```
+
+<div class="output stream stdout">
+
+    Length: 6
+    Help on function seq_length in module __main__:
+
+    seq_length(seq)
+        Return the length of a DNA sequence
+
+</div>
+
+</div>
+
+<div id="0ddae0cf" class="cell markdown">
+
+### 5A.2 (harder)
+
+Write `reverse_complement(seq)` (with docstring) using `translate` + `[::-1]`, handling lowercase input by upper-casing first. Test on `"atgc"` → `GCAT`.
+
+</div>
+
+<div id="35c2eabe" class="cell code" execution_count="45">
+
+``` python
+# your code here
+def reverse_complement(seq):
+    """Return the reverse complement of a DNA sequence"""
+    seq = seq.upper()
+    compl = seq.translate(str.maketrans("ACGT", "TGCA"))
+    return compl[::-1]
+reverse_complement("atgc")
+```
+
+<div class="output execute_result" execution_count="45">
+
+    'GCAT'
+
+</div>
+
+</div>
+
+<div id="08debaba" class="cell markdown">
+
+## 5B. Arguments, scope, multiple returns
+
+### Worked example
+
+</div>
+
+<div id="cebebdc5" class="cell code" execution_count="46">
+
+``` python
+def base_summary(seq, frame=0):
+    """Returns the summary of a sequence in a given frame (default 0)."""
+    seq = seq.upper()
+    gc = (seq.count("G") + seq.count("C")) / len(seq)
+    return len(seq), gc
+
+length, gc = base_summary("ATGCGC") #unpack into two names
+print(length, gc)
+```
+
+<div class="output stream stdout">
+
+    6 0.6666666666666666
+
+</div>
+
+</div>
+
+<div id="d3c613f2" class="cell markdown">
+
+### 5B.1 (easy — default argument)
+
+Write `count_base(seq, base="G")` that returns how many times `base` occurs in `seq`. Call it once with the default and once with `base="A"`.
+
+</div>
+
+<div id="4514a82d" class="cell code" execution_count="47">
+
+``` python
+# your code here
+def count_base(seq, base="G"):
+    count = 0
+    for b in seq:
+        if b == base:
+            count += 1
+    return count
+seq = "ACGTACCATAGT"
+print(f"A: {count_base(seq, base="A")}")
+print(f"G: {count_base(seq)}")
+```
+
+<div class="output stream stdout">
+
+    A: 4
+    G: 2
+
+</div>
+
+</div>
+
+<div id="64f8d853" class="cell markdown">
+
+### 5B.2 (harder — the mutable default bug)
+
+Run the buggy version below twice and observe the list grows across calls. Then write a fixed version using `acc=None`. Explain in a comment.
+
+</div>
+
+<div id="c6591a74" class="cell code" execution_count="48">
+
+``` python
+# Buggy:
+def collect_buggy(item, acc=[]):
+    acc.append(item)
+    return acc
+
+print(collect_buggy("rpoB"))
+print(collect_buggy("katG"))   # surprise: contains rpoB too!
+
+# your fixed version here
+def collect(item, acc=None):
+    acc = []
+    acc.append(item)
+    return acc
+print(collect("rpoB"))
+print(collect("katG"))
+```
+
+<div class="output stream stdout">
+
+    ['rpoB']
+    ['rpoB', 'katG']
+    ['rpoB']
+    ['katG']
+
+</div>
+
+</div>
+
+<div id="96d7d818" class="cell markdown">
+
+## 5C. Modules
+
+### Worked example (do this as real files in VS Code)
+
+Create a file `seqtools.py` next to your notebook containing `gc_content` and `reverse_complement`. Then the cell below imports and uses it. (If you haven't made the file yet, this cell will error — that's expected.)
+
+</div>
+
+<div id="22de00da" class="cell code" execution_count="49">
+
+``` python
+# Run only after creating seqtools.py in the same folder:
+import seqtools
+print(seqtools.gc_content("ATGCGC"))
+from seqtools import reverse_complement
+print(reverse_complement("ATGC"))
+#print("Create seqtools.py, then uncomment the lines above.")
+```
+
+<div class="output stream stdout">
+
+    0.6666666666666666
+    GCAT
+
+</div>
+
+</div>
+
+<div id="9bbbc83b" class="cell markdown">
+
+### 5C.1 (build your module)
+
+In VS Code, create `seqtools.py` with: `gc_content`, `reverse_complement`, `count_base`, and `transcribe` (DNA→RNA). Give each a docstring. Then import it here and test every function.
+
+</div>
+
+<div id="97e9cda2" class="cell code" execution_count="54">
+
+``` python
+# after creating seqtools.py:
+
+import seqtools
+sequence = "atggaattcgttacttga"
+sequence = sequence.upper()
+counts = {}
+for base in "ACGT":
+    counts[base] = seqtools.count_base(sequence, base)
+print(f"GC-content: {seqtools.gc_content(sequence)}")
+print(f"Reverse complement: {seqtools.reverse_complement(sequence)}")
+print(f"Number of bases {list(counts.keys())}: {list(counts.values())}")
+print(f"RNA: {seqtools.transcribe(sequence)}")
+```
+
+<div class="output stream stdout">
+
+    GC-content: 0.3333333333333333
+    Reverse complement: TCAAGTAACGAATTCCAT
+    Number of bases ['A', 'C', 'G', 'T']: [5, 2, 4, 7]
+    RNA: AUGGAAUUCGUUACUUGA
+
+</div>
+
+</div>
+
+<div id="3b76e5cc" class="cell markdown">
+
+------------------------------------------------------------------------
+
+## PART I CAPSTONE
+
+Write a single function `sequence_report(seq)` that takes a DNA string and returns (or prints) a full report:
+
+- length
+- whether it's a valid DNA sequence (A/C/G/T only)
+- base composition (counts of each base)
+- GC content (as a percentage)
+- reverse complement
+- the list of codons (in frame 0)
+
+Use **only functions you've written** (you may call them from within `sequence_report`). Then run it on `seq = "ATGCGTACGGGCTAA"`.
+
+When this works and reads cleanly, you have completed the foundations of Python. Everything in Part II builds on exactly these skills.
+
+</div>
+
+<div id="c057504f" class="cell code" execution_count="8">
+
+``` python
+seq = "ATGCGTACGGGCTAA"
+# your code here
+
+def sequence_report(s):
+    import seqtools
+    length = len(s)
+    valid = seqtools.check_seq(s)
+    base_comp = seqtools.counts(s)
+    gc = seqtools.gc_content(s)
+    rv_comp = seqtools.reverse_complement(s)
+    codons = seqtools.codons(s, frame=0)
+    print(f"{length} bp | {valid} | {base_comp} | {gc:.2%} | {rv_comp} | {codons}")
+    return
+
+sequence_report(seq)
+
+
+    
+```
+
+<div class="output stream stdout">
+
+    15 bp | True | {'A': 4, 'C': 3, 'G': 5, 'T': 3} | 53.33% | TTAGCCCGTACGCAT | ['ATG', 'CGT', 'ACG', 'GGC', 'TAA']
+
+</div>
+
+</div>
+
+
+## Solutions
+
+<div id="1a59c47e" class="cell markdown">
+
+# Python for Bioinformatics — Part I Solutions
+
+## Modules 1–5
+
+Reference solutions with commentary. Usually more than one correct approach exists; if yours produces the right output and reads clearly, it's fine. Compare *approach*, not just output.
+
+</div>
+
+<div id="8a5cd473" class="cell markdown">
+
+## Module 1
+
+</div>
+
+<div id="25ecb96a" class="cell markdown">
+
+**1A.1**
+
+</div>
+
+<div id="bfe4ad73" class="cell code" execution_count="1">
+
+``` python
+gene_name, length_bp, protein_length = "katG", 2223, 740
+print(f"{gene_name} encodes a protein of {protein_length} amino acids ({length_bp} bp).")
+```
+
+<div class="output stream stdout">
+
+    katG encodes a protein of 740 amino acids (2223 bp).
+
+</div>
+
+</div>
+
+<div id="591685a2" class="cell markdown">
+
+**1A.2** — compute, don't hard-code.
+
+</div>
+
+<div id="f2f35e46" class="cell code" execution_count="2">
+
+``` python
+length_bp = 2223
+protein_length = length_bp // 3 - 1
+print(f"{length_bp} bp -> {protein_length} amino acids")
+```
+
+<div class="output stream stdout">
+
+    2223 bp -> 740 amino acids
+
+</div>
+
+</div>
+
+<div id="95103564" class="cell markdown">
+
+**1B.1**
+
+</div>
+
+<div id="0dba1e43" class="cell code" execution_count="3">
+
+``` python
+reads_text, mapped_text = "4820000", "4502300"
+mapped = int(mapped_text)
+print(f"Mapped reads: {mapped}")
+```
+
+<div class="output stream stdout">
+
+    Mapped reads: 4502300
+
+</div>
+
+</div>
+
+<div id="959dff09" class="cell markdown">
+
+**1B.2** — division yields a float automatically.
+
+</div>
+
+<div id="164d94d2" class="cell code" execution_count="4">
+
+``` python
+reads = int("4820000"); mapped = int("4502300")
+rate = mapped / reads * 100
+print(f"Mapping rate: {rate:.2f}%")
+print(type(rate))
+```
+
+<div class="output stream stdout">
+
+    Mapping rate: 93.41%
+    <class 'float'>
+
+</div>
+
+</div>
+
+<div id="51f571e5" class="cell markdown">
+
+**1C.1**
+
+</div>
+
+<div id="18750c4c" class="cell code" execution_count="5">
+
+``` python
+length = 1000
+print(f"{length // 3} complete codons, {length % 3} leftover base(s)")
+```
+
+<div class="output stream stdout">
+
+    333 complete codons, 1 leftover base(s)
+
+</div>
+
+</div>
+
+<div id="a2c38627" class="cell markdown">
+
+**1C.2**
+
+</div>
+
+<div id="31839d32" class="cell code" execution_count="6">
+
+``` python
+plasmid, frag = 4361, 750
+print(f"Approx {plasmid // frag} fragments of {frag} bp, plus a {plasmid % frag} bp remainder.")
+```
+
+<div class="output stream stdout">
+
+    Approx 5 fragments of 750 bp, plus a 611 bp remainder.
+
+</div>
+
+</div>
+
+<div id="e9303db5" class="cell markdown">
+
+**1D.1**
+
+</div>
+
+<div id="d0878c57" class="cell code" execution_count="7">
+
+``` python
+dna = "ATGTTCGGATCC"
+print(f"Length: {len(dna)}")
+print(f"First base: {dna[0]}")
+print(f"Last base:  {dna[-1]}")
+print(f"Third base: {dna[2]}")
+```
+
+<div class="output stream stdout">
+
+    Length: 12
+    First base: A
+    Last base:  C
+    Third base: G
+
+</div>
+
+</div>
+
+<div id="d0fa1f4f" class="cell markdown">
+
+**1D.2** — one f-string.
+
+</div>
+
+<div id="8abfc2e8" class="cell code" execution_count="8">
+
+``` python
+seq_id, organism, seq = "NC_011147.1", "Salmonella enterica Paratyphi B", "ATGCGTACGTTAGCCGTAA"
+print(f"{seq_id} | {organism} | {len(seq)} bp | starts {seq[0]}, ends {seq[-1]}")
+```
+
+<div class="output stream stdout">
+
+    NC_011147.1 | Salmonella enterica Paratyphi B | 19 bp | starts A, ends A
+
+</div>
+
+</div>
+
+<div id="f89cfab9" class="cell markdown">
+
+## Module 2
+
+</div>
+
+<div id="5dad0b5e" class="cell markdown">
+
+**2A.1**
+
+</div>
+
+<div id="374451b6" class="cell code" execution_count="9">
+
+``` python
+mrna = "GGGAUGAAACCCUAGUUU"
+print(mrna[:3], mrna[-3:], mrna[3:6])
+```
+
+<div class="output stream stdout">
+
+    GGG UUU AUG
+
+</div>
+
+</div>
+
+<div id="3ae9f536" class="cell markdown">
+
+**2A.2**
+
+</div>
+
+<div id="fa10dc6b" class="cell code" execution_count="10">
+
+``` python
+cds = "ATGAAACCCGGGTAA"
+print("start:", cds[:3])
+print("stop: ", cds[-3:])
+print("inner:", cds[3:-3])
+```
+
+<div class="output stream stdout">
+
+    start: ATG
+    stop:  TAA
+    inner: AAACCCGGG
+
+</div>
+
+</div>
+
+<div id="e4d66c1a" class="cell markdown">
+
+**2B.1**
+
+</div>
+
+<div id="8eec8d9e" class="cell code" execution_count="11">
+
+``` python
+seq = "ATGCGCGCGTAT"
+print("A", seq.count("A"), "C", seq.count("C"), "G", seq.count("G"), "T", seq.count("T"))
+```
+
+<div class="output stream stdout">
+
+    A 2 C 3 G 4 T 3
+
+</div>
+
+</div>
+
+<div id="5e285e0d" class="cell markdown">
+
+**2B.2**
+
+</div>
+
+<div id="68b08961" class="cell code" execution_count="12">
+
+``` python
+dna = "ATGCGTACG"
+mrna = dna.replace("T", "U")
+print("mRNA:", mrna)
+gc = (dna.count("G") + dna.count("C")) / len(dna)
+print(f"GC: {gc:.2%}")
+```
+
+<div class="output stream stdout">
+
+    mRNA: AUGCGUACG
+    GC: 55.56%
+
+</div>
+
+</div>
+
+<div id="3f8ff929" class="cell markdown">
+
+**2C.1**
+
+</div>
+
+<div id="b93e4c48" class="cell code" execution_count="13">
+
+``` python
+dna = "GGGTTTAAACCC"
+print(dna.translate(str.maketrans("ACGT", "TGCA"))[::-1])
+```
+
+<div class="output stream stdout">
+
+    GGGTTTAAACCC
+
+</div>
+
+</div>
+
+<div id="d99f42db" class="cell markdown">
+
+**2C.2** — the chained-replace bug, then the fix.
+
+</div>
+
+<div id="2bacf9c5" class="cell code" execution_count="14">
+
+``` python
+dna = "ATGC"
+broken = dna.replace("A","T").replace("T","A").replace("G","C").replace("C","G")
+print("broken:", broken)
+# Wrong because replace runs sequentially: A->T makes T's, then T->A turns them
+# (and the original T) all back to A; G/C collide the same way.
+correct = dna.translate(str.maketrans("ACGT","TGCA"))[::-1]
+print("correct rev-comp:", correct)
+```
+
+<div class="output stream stdout">
+
+    broken: AAGG
+    correct rev-comp: GCAT
+
+</div>
+
+</div>
+
+<div id="a1ba5a6d" class="cell markdown">
+
+**2C.3** — first ATG (loop version finds all).
+
+</div>
+
+<div id="5ab0ed36" class="cell code" execution_count="15">
+
+``` python
+seq = "CCATGCCCATGTAA"
+print("first ATG at:", seq.find("ATG"))
+# all ATGs:
+positions = [i for i in range(len(seq)-2) if seq[i:i+3] == "ATG"]
+print("all ATG starts:", positions)
+```
+
+<div class="output stream stdout">
+
+    first ATG at: 2
+    all ATG starts: [2, 8]
+
+</div>
+
+</div>
+
+<div id="1175f254" class="cell markdown">
+
+## Module 3
+
+</div>
+
+<div id="1b0db65d" class="cell markdown">
+
+**3A.1**
+
+</div>
+
+<div id="2b80e30b" class="cell code" execution_count="16">
+
+``` python
+gc = 0.35
+if gc > 0.6:
+    print("GC-rich")
+elif gc < 0.4:
+    print("AT-rich")
+else:
+    print("balanced")
+```
+
+<div class="output stream stdout">
+
+    AT-rich
+
+</div>
+
+</div>
+
+<div id="fda8a351" class="cell markdown">
+
+**3A.2**
+
+</div>
+
+<div id="45b1d4e7" class="cell code" execution_count="17">
+
+``` python
+length, gc = 1500, 0.55
+print(length > 1000 and 0.4 <= gc <= 0.6)
+```
+
+<div class="output stream stdout">
+
+    True
+
+</div>
+
+</div>
+
+<div id="58f9c3e6" class="cell markdown">
+
+**3B.1** — count by looping, not `.count()`.
+
+</div>
+
+<div id="3d0b8090" class="cell code" execution_count="18">
+
+``` python
+seq = "ATGCGCGTAT"
+gc = 0
+for base in seq:
+    if base == "G" or base == "C":
+        gc += 1
+print("G+C:", gc)
+```
+
+<div class="output stream stdout">
+
+    G+C: 5
+
+</div>
+
+</div>
+
+<div id="b24108bd" class="cell markdown">
+
+**3B.2** — codon walker.
+
+</div>
+
+<div id="a3872025" class="cell code" execution_count="19">
+
+``` python
+cds = "ATGAAACCCGGGTAA"
+for i in range(0, len(cds), 3):
+    print(f"{i}: {cds[i:i+3]}")
+```
+
+<div class="output stream stdout">
+
+    0: ATG
+    3: AAA
+    6: CCC
+    9: GGG
+    12: TAA
+
+</div>
+
+</div>
+
+<div id="4c02c55c" class="cell markdown">
+
+**3C.1**
+
+</div>
+
+<div id="a528095d" class="cell code" execution_count="20">
+
+``` python
+seq = "ATGAAACCCTAA"
+i = 0
+while i < len(seq) - 2:
+    codon = seq[i:i+3]
+    if codon in ("TAA", "TAG", "TGA"):
+        print("first stop at", i)
+        break
+    i += 3
+```
+
+<div class="output stream stdout">
+
+    first stop at 9
+
+</div>
+
+</div>
+
+<div id="8a1aa880" class="cell markdown">
+
+**3C.2** — minimal ORF finder.
+
+</div>
+
+<div id="2afb9949" class="cell code" execution_count="21">
+
+``` python
+seq = "CCCATGAAACCCGGGTAACC"
+start = seq.find("ATG")
+orf = ""
+i = start
+while i < len(seq) - 2:
+    codon = seq[i:i+3]
+    orf += codon
+    if codon in ("TAA", "TAG", "TGA"):
+        break
+    i += 3
+print("ORF:", orf)
+```
+
+<div class="output stream stdout">
+
+    ORF: ATGAAACCCGGGTAA
+
+</div>
+
+</div>
+
+<div id="e6aab37b" class="cell markdown">
+
+## Module 4
+
+</div>
+
+<div id="51539857" class="cell markdown">
+
+**4A.1**
+
+</div>
+
+<div id="8a86ba0f" class="cell code" execution_count="22">
+
+``` python
+genes = ["dnaA", "gyrB"]
+genes.append("recA")
+genes[0] = "dnaA_mut"
+print(genes, len(genes))
+```
+
+<div class="output stream stdout">
+
+    ['dnaA_mut', 'gyrB', 'recA'] 3
+
+</div>
+
+</div>
+
+<div id="61e32573" class="cell markdown">
+
+**4A.2** — aliasing vs copy.
+
+</div>
+
+<div id="5a4acc42" class="cell code" execution_count="23">
+
+``` python
+a = ["rpoB", "katG"]
+b = a            # same object!
+b.append("gyrA")
+print("a after b.append:", a)   # a changed too
+
+c = a.copy()     # independent copy
+c.append("inhA")
+print("a after c.append:", a)   # a unaffected
+# b = a binds the SAME list; .copy() makes a new one.
+```
+
+<div class="output stream stdout">
+
+    a after b.append: ['rpoB', 'katG', 'gyrA']
+    a after c.append: ['rpoB', 'katG', 'gyrA']
+
+</div>
+
+</div>
+
+<div id="ddcd75f1" class="cell markdown">
+
+**4B.1** — base frequency counter.
+
+</div>
+
+<div id="d31ab9d8" class="cell code" execution_count="24">
+
+``` python
+seq = "AATTTGCGCGCGAT"
+counts = {}
+for base in seq:
+    counts[base] = counts.get(base, 0) + 1
+print(counts)
+```
+
+<div class="output stream stdout">
+
+    {'A': 3, 'T': 4, 'G': 4, 'C': 3}
+
+</div>
+
+</div>
+
+<div id="be327bd2" class="cell markdown">
+
+**4B.2** — translate.
+
+</div>
+
+<div id="2ed5752c" class="cell code" execution_count="25">
+
+``` python
+codon_table = {"ATG":"M","AAA":"K","TGG":"W","TAA":"*","TAG":"*","TGA":"*"}
+cds = "ATGAAATGG"
+protein = ""
+for i in range(0, len(cds), 3):
+    protein += codon_table[cds[i:i+3]]
+print(protein)
+```
+
+<div class="output stream stdout">
+
+    MKW
+
+</div>
+
+</div>
+
+<div id="496a4796" class="cell markdown">
+
+**4C.1** — validate.
+
+</div>
+
+<div id="09045147" class="cell code" execution_count="26">
+
+``` python
+for seq in ["ATGCGT", "ATGXYZ"]:
+    print(seq, set(seq) <= {"A","C","G","T"})
+```
+
+<div class="output stream stdout">
+
+    ATGCGT True
+    ATGXYZ False
+
+</div>
+
+</div>
+
+<div id="003850c8" class="cell markdown">
+
+**4C.2** — sample comparison.
+
+</div>
+
+<div id="467d542b" class="cell code" execution_count="27">
+
+``` python
+sample1 = {"rpoB", "katG", "gyrA", "embB"}
+sample2 = {"katG", "gyrA", "inhA", "pncA"}
+print("both:  ", sample1 & sample2)
+print("either:", sample1 | sample2)
+print("only 1:", sample1 - sample2)
+```
+
+<div class="output stream stdout">
+
+    both:   {'gyrA', 'katG'}
+    either: {'gyrA', 'pncA', 'embB', 'rpoB', 'katG', 'inhA'}
+    only 1: {'embB', 'rpoB'}
+
+</div>
+
+</div>
+
+<div id="38ae7e8d" class="cell markdown">
+
+**Module 4 challenge** — base-composition report.
+
+</div>
+
+<div id="01fd5ed7" class="cell code" execution_count="28">
+
+``` python
+seq = "ATGCGCGTATTACCGGGCAT"
+if not set(seq) <= {"A","C","G","T"}:
+    print("WARNING: invalid bases present")
+counts = {}
+for base in seq:
+    counts[base] = counts.get(base, 0) + 1
+gc = (counts.get("G",0) + counts.get("C",0)) / len(seq)
+print(f"Length: {len(seq)}")
+print(f"Valid:  {set(seq) <= set('ACGT')}")
+print(f"Composition: {counts}")
+print(f"GC content: {gc:.2%}")
+```
+
+<div class="output stream stdout">
+
+    Length: 20
+    Valid:  True
+    Composition: {'A': 4, 'T': 5, 'G': 6, 'C': 5}
+    GC content: 55.00%
+
+</div>
+
+</div>
+
+<div id="7fe1d740" class="cell markdown">
+
+## Module 5
+
+</div>
+
+<div id="8b1276eb" class="cell markdown">
+
+**5A.1**
+
+</div>
+
+<div id="afed5269" class="cell code" execution_count="29">
+
+``` python
+def seq_length(seq):
+    """Return the number of bases in seq."""
+    return len(seq)
+
+print(seq_length("ATGCGT"))
+```
+
+<div class="output stream stdout">
+
+    6
+
+</div>
+
+</div>
+
+<div id="09019288" class="cell markdown">
+
+**5A.2**
+
+</div>
+
+<div id="9af6b155" class="cell code" execution_count="30">
+
+``` python
+def reverse_complement(seq):
+    """Return the reverse complement of a DNA sequence."""
+    return seq.upper().translate(str.maketrans("ACGT", "TGCA"))[::-1]
+
+print(reverse_complement("atgc"))
+```
+
+<div class="output stream stdout">
+
+    GCAT
+
+</div>
+
+</div>
+
+<div id="1416312d" class="cell markdown">
+
+**5B.1**
+
+</div>
+
+<div id="daf882db" class="cell code" execution_count="31">
+
+``` python
+def count_base(seq, base="G"):
+    """Count occurrences of base in seq (default G)."""
+    return seq.upper().count(base.upper())
+
+print(count_base("ATGCGC"))          # default G
+print(count_base("ATGCGC", base="A"))
+```
+
+<div class="output stream stdout">
+
+    2
+    1
+
+</div>
+
+</div>
+
+<div id="90ece900" class="cell markdown">
+
+**5B.2** — mutable default bug and fix.
+
+</div>
+
+<div id="71803a65" class="cell code" execution_count="32">
+
+``` python
+def collect_buggy(item, acc=[]):
+    acc.append(item)
+    return acc
+print(collect_buggy("rpoB"))
+print(collect_buggy("katG"))   # contains rpoB too — same list reused
+
+def collect_fixed(item, acc=None):
+    if acc is None:
+        acc = []        # fresh list every call
+    acc.append(item)
+    return acc
+print(collect_fixed("rpoB"))
+print(collect_fixed("katG"))   # independent now
+```
+
+<div class="output stream stdout">
+
+    ['rpoB']
+    ['rpoB', 'katG']
+    ['rpoB']
+    ['katG']
+
+</div>
+
+</div>
+
+<div id="3ed409cd" class="cell markdown">
+
+**5C** — `seqtools.py` contents (create this file in VS Code):
+
+</div>
+
+<div id="279ba8bb" class="cell code" execution_count="33">
+
+``` python
+seqtools_source = '''
+def gc_content(seq):
+    """Return GC fraction."""
+    seq = seq.upper()
+    return (seq.count("G") + seq.count("C")) / len(seq)
+
+def reverse_complement(seq):
+    """Return reverse complement."""
+    return seq.upper().translate(str.maketrans("ACGT", "TGCA"))[::-1]
+
+def count_base(seq, base="G"):
+    """Count base in seq."""
+    return seq.upper().count(base.upper())
+
+def transcribe(seq):
+    """DNA -> RNA."""
+    return seq.upper().replace("T", "U")
+'''
+print(seqtools_source)
+# Save the above (without the triple-quote wrapper) as seqtools.py,
+# then: import seqtools; seqtools.gc_content("ATGCGC")
+```
+
+<div class="output stream stdout">
+
+
+    def gc_content(seq):
+        """Return GC fraction."""
+        seq = seq.upper()
+        return (seq.count("G") + seq.count("C")) / len(seq)
+
+    def reverse_complement(seq):
+        """Return reverse complement."""
+        return seq.upper().translate(str.maketrans("ACGT", "TGCA"))[::-1]
+
+    def count_base(seq, base="G"):
+        """Count base in seq."""
+        return seq.upper().count(base.upper())
+
+    def transcribe(seq):
+        """DNA -> RNA."""
+        return seq.upper().replace("T", "U")
+
+</div>
+
+</div>
+
+<div id="cece5c1c" class="cell markdown">
+
+**Part I capstone** — full sequence report from your own functions.
+
+</div>
+
+<div id="72546471" class="cell code" execution_count="34">
+
+``` python
+def gc_content(seq):
+    seq = seq.upper()
+    return (seq.count("G") + seq.count("C")) / len(seq)
+
+def reverse_complement(seq):
+    return seq.upper().translate(str.maketrans("ACGT", "TGCA"))[::-1]
+
+def is_valid_dna(seq):
+    return set(seq.upper()) <= {"A", "C", "G", "T"}
+
+def base_composition(seq):
+    counts = {}
+    for base in seq.upper():
+        counts[base] = counts.get(base, 0) + 1
+    return counts
+
+def codons(seq):
+    return [seq[i:i+3] for i in range(0, len(seq) - 2, 3)]
+
+def sequence_report(seq):
+    seq = seq.upper()
+    print(f"Length:       {len(seq)} bp")
+    print(f"Valid DNA:    {is_valid_dna(seq)}")
+    print(f"Composition:  {base_composition(seq)}")
+    print(f"GC content:   {gc_content(seq):.2%}")
+    print(f"Rev-comp:     {reverse_complement(seq)}")
+    print(f"Codons:       {codons(seq)}")
+
+sequence_report("ATGCGTACGGGCTAA")
+```
+
+<div class="output stream stdout">
+
+    Length:       15 bp
+    Valid DNA:    True
+    Composition:  {'A': 4, 'T': 3, 'G': 5, 'C': 3}
+    GC content:   53.33%
+    Rev-comp:     TTAGCCCGTACGCAT
+    Codons:       ['ATG', 'CGT', 'ACG', 'GGC', 'TAA']
+
+</div>
+
+</div>
+
+<div id="4fbd37cd" class="cell markdown">
+
+------------------------------------------------------------------------
+
+*You've finished the foundations.* In Part II we read real FASTA/FASTQ files, add error handling and automated tests, and learn object-oriented programming — turning these loose functions into a proper, GitHub-ready toolkit.
+
+</div>
+
+
+:::
+

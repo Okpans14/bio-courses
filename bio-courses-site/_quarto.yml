@@ -1,0 +1,115 @@
+project:
+  type: website
+  output-dir: _site
+  # Render ONLY the .qmd pages. Everything else (notebooks, .R scripts,
+  # data) is copied into the site as a downloadable resource, not rendered.
+  render:
+    - "index.qmd"
+    - "python-for-bioinformatics/*.qmd"
+    - "r-for-bioinformatics/*.qmd"
+    - "statistics-for-biologists/*.qmd"
+
+# Code is shown for reference, never executed, so the site builds
+# without R or the data files present. Learners run the .R scripts
+# themselves in RStudio.
+execute:
+  enabled: false
+
+website:
+  title: "Bioinformatics & Statistics Courses"
+  description: "Hands-on open courses: Python & R for bioinformatics, and statistics for biologists."
+  reader-mode: true
+  page-navigation: true
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: python-for-bioinformatics/index.qmd
+        text: Python for Bioinformatics
+      - href: r-for-bioinformatics/index.qmd
+        text: R for Bioinformatics
+      - href: statistics-for-biologists/index.qmd
+        text: Statistics for Biologists
+      - href: statistics-for-biologists/choosing-a-test.qmd
+        text: Which test?
+  sidebar:
+    - title: "Python for Bioinformatics"
+      contents:
+        - python-for-bioinformatics/index.qmd
+        - section: "Part I — Foundations"
+          contents:
+            - python-for-bioinformatics/PartI-theory.qmd
+            - python-for-bioinformatics/PartI-code.qmd
+        - section: "Part II — Real Programming"
+          contents:
+            - python-for-bioinformatics/PartII-theory.qmd
+            - python-for-bioinformatics/PartII-code.qmd
+        - section: "Part III — The Ecosystem"
+          contents:
+            - python-for-bioinformatics/PartIII-theory.qmd
+            - python-for-bioinformatics/PartIII-code.qmd
+        - section: "Part IV — Your Own Tools & Pipelines"
+          contents:
+            - python-for-bioinformatics/PartIV-theory.qmd
+            - python-for-bioinformatics/PartIV-code.qmd
+    - title: "R for Bioinformatics"
+      contents:
+        - r-for-bioinformatics/index.qmd
+        - section: "Part I — Foundations"
+          contents:
+            - r-for-bioinformatics/PartI-theory.qmd
+            - r-for-bioinformatics/PartI-code.qmd
+        - section: "Part II — Real Programming"
+          contents:
+            - r-for-bioinformatics/PartII-theory.qmd
+            - r-for-bioinformatics/PartII-code.qmd
+        - section: "Part III — Tidyverse"
+          contents:
+            - r-for-bioinformatics/PartIII-theory.qmd
+            - r-for-bioinformatics/PartIII-code.qmd
+        - section: "Part IV — Bioconductor"
+          contents:
+            - r-for-bioinformatics/PartIV-theory.qmd
+            - r-for-bioinformatics/PartIV-code.qmd
+        - section: "Part V — Reproducible"
+          contents:
+            - r-for-bioinformatics/PartV-theory.qmd
+            - r-for-bioinformatics/PartV-code.qmd
+    - title: "Statistics for Biologists"
+      contents:
+        - statistics-for-biologists/index.qmd
+        - statistics-for-biologists/choosing-a-test.qmd
+        - section: "Part I — Data & Description"
+          contents:
+            - statistics-for-biologists/PartI-theory.qmd
+            - statistics-for-biologists/PartI-code.qmd
+        - section: "Part II — Probability"
+          contents:
+            - statistics-for-biologists/PartII-theory.qmd
+            - statistics-for-biologists/PartII-code.qmd
+        - section: "Part III — Hypothesis Testing"
+          contents:
+            - statistics-for-biologists/PartIII-theory.qmd
+            - statistics-for-biologists/PartIII-code.qmd
+        - section: "Part IV — Linear Models"
+          contents:
+            - statistics-for-biologists/PartIV-theory.qmd
+            - statistics-for-biologists/PartIV-code.qmd
+        - section: "Part V — GLMs & Mixed Models"
+          contents:
+            - statistics-for-biologists/PartV-theory.qmd
+            - statistics-for-biologists/PartV-code.qmd
+        - section: "Part VI — Multivariate & Reproducible"
+          contents:
+            - statistics-for-biologists/PartVI-theory.qmd
+            - statistics-for-biologists/PartVI-code.qmd
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    code-overflow: wrap
+    anchor-sections: true

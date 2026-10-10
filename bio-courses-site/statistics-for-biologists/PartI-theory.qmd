@@ -1,0 +1,180 @@
+---
+title: "Part I — Data & Description — Theory"
+---
+
+## From study design to models that answer biological questions
+
+### PART I — Data & Description · Modules 1–3
+
+*Study design & types of data · descriptive statistics · exploratory visualisation*
+
+Read a section, then do the matching exercises in `PartI_exercises.R` before continuing.
+
+## How to use this course
+
+This course teaches the statistics a working biologist actually needs — from describing data to generalised and mixed models — using **R**. It assumes you can already use R at the level of the companion *R for Bioinformatics* course: vectors, data frames, the tidyverse (`dplyr`, `ggplot2`), and reading a CSV. If a line of R is unfamiliar, run it and inspect the result; the statistics, not the syntax, is the focus here.
+
+Each part ships three files: this theory document, an **exercises** script (`PartI_exercises.R`), and a **solutions** script with commentary. After most sections a **▶ Practise now** box tells you which exercises to do before reading on.
+
+The course has a spine running through it: **a statistical analysis is three questions.** What is the biological question? What kind of data answer it, and how were they collected? Which model matches that question and those data? Techniques (t-test, regression, GLM) are answers to the third question — but the first two decide whether any answer is valid. We start there.
+
+**The guiding principle.** The goal of statistics in biology is not to produce a p-value. It is to **estimate the size of an effect and our uncertainty about it**, honestly, given how the data were collected. Keep that in view and the whole subject organises itself.
+
+**Datasets.** The course uses six biology datasets in `data/` (described in the README). Part I uses `morphology.csv` — body measurements of 120 beetles from two sites, both sexes.
+
+**Time guide.** Module 1 ≈ 4h · Module 2 ≈ 5h · Module 3 ≈ 5h. Total ≈ 14 hours.
+
+## Module 1 — Study design & types of data
+
+Estimated: 4 hours. Statistics cannot rescue a badly designed study. This module is the one most often skipped and most often the reason an analysis is wrong.
+
+### 1.1 Populations and samples
+
+You almost never measure the whole **population** (every beetle of a species); you measure a **sample** and use it to infer something about the population. Every statistic you compute (a mean, a difference) is an *estimate* of a population quantity, and it comes with uncertainty because a different sample would have given a slightly different number. That uncertainty — not the point estimate alone — is what inference quantifies.
+
+### 1.2 Types of variables
+
+The variable type determines which statistics and which models are valid.
+
+  ----------------------------------------------------------------------------------------------------
+  Type                        Examples                                 
+  --------------------------- ---------------------------------------- -------------------------------
+  **Continuous** (numeric)    body length, concentration, time         can take any value in a range
+
+  **Count** (discrete)        parasites per host, colonies per plate   non-negative integers
+
+  **Categorical — nominal**   species, site, sex                       unordered groups
+
+  **Categorical — ordinal**   disease stage (I/II/III), low/med/high   ordered groups
+
+  **Binary**                  infected / not, alive / dead             a special two-level category
+  ----------------------------------------------------------------------------------------------------
+
+In R these map to `numeric`, `integer`, `factor` (unordered or `ordered`), and often a 0/1 `integer` or logical for binary. Getting the type right in R (`str(data)`) is the first analysis step — a categorical variable stored as a number will be modelled as if it were continuous, silently and wrongly.
+
+### 1.3 Explanatory and response variables
+
+Frame the question as: **response \~ explanatory**. The *response* (dependent) variable is what you want to explain or predict; the *explanatory* (independent, predictor) variables are what might explain it. “Does body size differ by sex?” → response `body_length`, explanatory `sex`. This `response ~ predictors` formula *is* the R modelling syntax (`lm(body_length ~ sex)`), so learning to phrase questions this way is learning to write models.
+
+### 1.4 Experimental vs observational studies
+
+-   **Experimental:** you *assign* the explanatory variable (randomly allocate plants to fertiliser levels). Randomised assignment is what licenses causal claims.
+-   **Observational:** you *measure* the explanatory variable as it occurs (record each host’s age). You can establish association, but causation is confounded by everything you did not control.
+
+Most field biology is observational; that is fine, but it means “X is associated with Y,” not “X causes Y,” unless you have designed otherwise.
+
+### 1.5 Replication, randomisation, and the pseudoreplication trap
+
+Three design pillars, and the trap that invalidates more biology papers than any other:
+
+-   **Replication** — independent observations at the level of the biological question. More replicates = more precise estimates and more power.
+-   **Randomisation** — assign treatments (and arrange samples) at random, to break confounding with things you didn’t measure.
+-   **Blocking** — group similar experimental units (same shelf, same day, same tank) and compare within blocks to remove that nuisance variation.
+
+**Pseudoreplication** is treating measurements that are *not* independent as if they were. Measure 5 tadpoles in each of 2 tanks (one tank warmed, one control) and you have **2** independent replicates of the treatment, not 10 — the tadpoles in a tank share its water, its history, its quirks. Analyse the 10 as independent and your p-value is badly inflated. The fix is either to summarise to the independent unit (the tank) or to model the non-independence explicitly — which is exactly what **mixed models** (Part V) do. We flag pseudoreplication now because recognising it is a design skill, and return to it with the tools to handle it.
+
+> **▶ Practise now — Module 1 → sections 1A–1B in** `PartI_exercises.R`**.**
+
+## Module 2 — Descriptive statistics
+
+Estimated: 5 hours. Before any test, describe the data: where it sits, how it spreads, and — crucially — how *uncertain* your summary is.
+
+### 2.1 Central tendency
+
+    library(tidyverse)
+    morph <- read_csv("data/morphology.csv")
+
+    mean(morph$body_length_mm)     # arithmetic mean — sensitive to outliers
+    median(morph$body_length_mm)   # middle value — robust to outliers
+
+Use the **median** when the distribution is skewed or has outliers (common for counts, concentrations, survival times); the **mean** when it is roughly symmetric. If mean and median differ a lot, the distribution is skewed — a signal to look closer.
+
+### 2.2 Spread
+
+    var(morph$body_length_mm)      # variance (squared units)
+    sd(morph$body_length_mm)       # standard deviation (original units)
+    IQR(morph$body_length_mm)      # interquartile range — robust spread
+    range(morph$body_length_mm)
+    quantile(morph$body_length_mm, c(.25, .5, .75))
+
+The **standard deviation** describes the spread of the *data*. Keep it distinct from the next quantity, which describes the spread of an *estimate* — the single most confused pair in biological statistics.
+
+### 2.3 SD vs SE vs CI — get this right
+
+-   **Standard deviation (SD)** — how spread out the individual measurements are. A property of the data; it does *not* shrink as you collect more.
+-   **Standard error of the mean (SE)** — how spread out the *sample mean* would be across repeated samples. `SE = SD / sqrt(n)`. It shrinks as n grows, because larger samples estimate the mean more precisely.
+-   **Confidence interval (CI)** — a range that, under repeated sampling, would contain the true mean a stated fraction of the time (usually 95%). Roughly `mean ± 1.96 × SE` for large n.
+
+```{=html}
+<!-- -->
+```
+    n  <- length(morph$body_length_mm)
+    se <- sd(morph$body_length_mm) / sqrt(n)
+    ci <- mean(morph$body_length_mm) + c(-1, 1) * qt(0.975, df = n - 1) * se
+
+**Which to report?** To describe biological variability (how much do beetles differ?), report the **SD**. To describe how precisely you’ve estimated a mean or a difference, report the **SE or 95% CI**. Error bars on a plot must say which they are — SE bars look reassuringly small but answer a different question than SD bars.
+
+### 2.4 Grouped description
+
+The everyday move — summarise by group with dplyr:
+
+    morph |>
+      group_by(sex) |>
+      summarise(
+        n      = n(),
+        mean   = mean(body_length_mm),
+        sd     = sd(body_length_mm),
+        se     = sd / sqrt(n)
+      )
+
+This single table — n, mean, SD, SE per group — is the right first look at almost any “does it differ between groups?” question, *before* any test.
+
+> **▶ Practise now — Module 2 → sections 2A–2C in** `PartI_exercises.R`**.**
+
+## Module 3 — Exploratory visualisation
+
+Estimated: 5 hours. **Always plot the data before testing it.** Summary statistics hide shape; two datasets with identical means and SDs can look completely different. A plot reveals skew, outliers, bimodality, and wrong data types in seconds.
+
+### 3.1 Distribution of one variable
+
+    library(ggplot2)
+
+    ggplot(morph, aes(x = body_length_mm)) +
+      geom_histogram(bins = 20)           # shape, skew, gaps, outliers
+
+    ggplot(morph, aes(x = body_length_mm)) +
+      geom_density()                      # smoothed version
+
+Look for: Is it roughly symmetric and bell-shaped (many tests assume approximate normality of residuals)? Skewed? Bimodal (hinting at a hidden grouping)? Are there impossible values (a negative length = a data-entry error)?
+
+### 3.2 Comparing groups
+
+    ggplot(morph, aes(x = sex, y = body_length_mm)) +
+      geom_boxplot()                      # median, quartiles, outliers per group
+
+    ggplot(morph, aes(x = sex, y = body_length_mm)) +
+      geom_jitter(width = 0.15)           # show every point — best for small n
+
+The **boxplot** shows the median (middle line), the interquartile range (box), whiskers, and outliers. For small samples, prefer plotting the raw points (`geom_jitter`) or overlaying them on the box — a boxplot of n = 5 implies more than it should. A good default combines them.
+
+### 3.3 Relationship between two continuous variables
+
+    ggplot(morph, aes(x = body_length_mm, y = wing_length_mm)) +
+      geom_point() +
+      geom_smooth(method = "lm")          # a straight-line fit with its CI band
+
+A scatterplot is the mandatory first step before correlation or regression (Part IV). It shows whether the relationship is linear, how tight it is, and whether outliers or curvature would break a linear model.
+
+### 3.4 Checking for normality visually: the QQ plot
+
+    ggplot(morph, aes(sample = body_length_mm)) +
+      stat_qq() + stat_qq_line()
+
+A **quantile–quantile plot** plots your data’s quantiles against those of a normal distribution. Points on the line = approximately normal; systematic curves = skew; S-shapes = heavy tails. For judging normality, a QQ plot beats a formal normality test (Shapiro–Wilk), which with large n flags trivial, harmless departures and with small n has no power to detect real ones. Trust the picture.
+
+### 3.5 Why this comes first
+
+Every test and model in the rest of the course carries assumptions — about shape, about equal variances, about linearity, about independence. Those assumptions are checked by *looking*: at the data before, and at the model’s residuals after. A biologist who plots first makes far fewer wrong inferences than one who runs straight to `t.test()`. Part II turns this visual intuition into the probability machinery that makes inference possible.
+
+> **▶ Practise now — Module 3 → sections 3A–3B and the Part I capstone in** `PartI_exercises.R`**.**
+

@@ -1,0 +1,126 @@
+---
+title: "Part II — Probability & Inference — Theory"
+---
+
+### PART II — Probability & Inference Foundations · Modules 4–5
+
+*Probability distributions · sampling, the CLT & confidence intervals*
+
+Read a section, then do the matching exercises in `PartII_exercises.R` before continuing.
+
+## Where Part II takes you
+
+Inference — reasoning from a sample to a population — rests on probability. This part builds the two ideas every later test depends on: the **probability distributions** that model biological data, and the **sampling distribution** that connects one sample to the uncertainty in its estimates. Get these two ideas and p-values, confidence intervals, and every test in Part III stop being recipes and start being obvious.
+
+**Time guide.** Module 4 ≈ 5h · Module 5 ≈ 5h. Total ≈ 10 hours. Datasets: `morphology.csv`, `parasite_counts.csv`.
+
+## Module 4 — Probability distributions
+
+Estimated: 5 hours. A distribution is a model for how a random quantity behaves. Choosing the distribution that matches your data type is the foundation of choosing the right analysis.
+
+### 4.1 The distributions a biologist needs
+
+  -----------------------------------------------------------------------------------------------------------
+  Distribution            Models                                   Example
+  ----------------------- ---------------------------------------- ------------------------------------------
+  **Normal (Gaussian)**   continuous, symmetric measurements       body length, log-concentration
+
+  **Binomial**            number of “successes” in n trials        infected out of n exposed
+
+  **Poisson**             counts of events in a fixed unit         parasites per host, mutations per genome
+
+  **Negative binomial**   counts, but more variable than Poisson   RNA-seq read counts (overdispersed)
+  -----------------------------------------------------------------------------------------------------------
+
+The match matters: modelling counts as normal (and getting negative predictions) or ignoring overdispersion is a common, avoidable error. Parts IV–V give each its proper model.
+
+### 4.2 The normal distribution and the `d/p/q/r` family
+
+Every distribution in R has four functions, prefixed `d`, `p`, `q`, `r`:
+
+    dnorm(x, mean, sd)   # density      - height of the curve at x
+    pnorm(q, mean, sd)   # probability  - P(X <= q), the cumulative probability
+    qnorm(p, mean, sd)   # quantile     - the x with P(X <= x) = p (inverse of pnorm)
+    rnorm(n, mean, sd)   # random       - draw n random values
+
+For example, if beetle body length is roughly Normal(mean 12.9, sd 1.2):
+
+    pnorm(15, 12.9, 1.2)              # P(a beetle is shorter than 15 mm)
+    1 - pnorm(15, 12.9, 1.2)          # P(longer than 15 mm)
+    qnorm(0.975, 12.9, 1.2)           # the length exceeded by only 2.5%
+
+The pair you will use most are `qnorm(0.975) ≈ 1.96` (the source of “± 1.96 SE” for 95% intervals) and `pnorm()` for turning a test statistic into a p-value.
+
+### 4.3 Binomial and Poisson in R
+
+    # Binomial: 20 hosts exposed, each infected with probability 0.3
+    dbinom(8, size = 20, prob = 0.3)     # P(exactly 8 infected)
+    pbinom(8, 20, 0.3)                   # P(8 or fewer)
+    rbinom(5, 20, 0.3)                   # simulate 5 experiments
+
+    # Poisson: mean 3 parasites per host
+    dpois(0, lambda = 3)                 # P(a host has zero parasites)
+    ppois(5, 3)                          # P(5 or fewer)
+    rpois(10, 3)                         # simulate 10 hosts
+
+A diagnostic fact worth knowing: for a Poisson, the **variance equals the mean**. If your count data have variance much larger than the mean (very common in biology), they are *overdispersed* and need the negative binomial or a quasi-Poisson model (Part V) — not plain Poisson.
+
+### 4.4 Why distributions matter for inference
+
+Two uses run through the whole course. First, a distribution **models the data** (counts → Poisson), which dictates the model you fit. Second, a distribution **describes a test statistic** under the null hypothesis (a t-statistic follows a t-distribution), which is how a statistic becomes a p-value. Both are the `d/p/q/r` machinery above.
+
+> **▶ Practise now — Module 4 → sections 4A–4B in** `PartII_exercises.R`**.**
+
+## Module 5 — Sampling, the CLT & confidence intervals
+
+Estimated: 5 hours. This is the conceptual heart of inference. Understand the *sampling distribution* and everything downstream follows.
+
+### 5.1 The sampling distribution of the mean
+
+Your sample mean is one number — but it is a *random* number: a different sample would give a different mean. Imagine repeating your study many times and collecting all those means. Their distribution is the **sampling distribution of the mean**, and its spread is the **standard error**. The SE is not an abstract formula; it is literally how much your estimate would bounce around on repetition.
+
+You can see this by simulation — draw many samples from a known population and look at the spread of their means:
+
+    pop <- rnorm(100000, mean = 12.9, sd = 1.2)     # a pretend population
+    means <- replicate(2000, mean(sample(pop, size = 30)))
+    sd(means)                 # the empirical standard error
+    1.2 / sqrt(30)            # the formula SE = sd / sqrt(n) - they match
+
+### 5.2 The Central Limit Theorem
+
+The **CLT** is why normal-based methods work so widely. It says: *whatever* the shape of the population, the sampling distribution of the **mean** becomes approximately **normal** as the sample size grows. So even for skewed data (counts, concentrations), the mean’s uncertainty is approximately normal for reasonable n — which is why t-tests and CIs on means are robust to non-normal data, especially as n increases.
+
+    pop <- rpois(100000, lambda = 3)                # a skewed (Poisson) population
+    hist(replicate(2000, mean(sample(pop, 40))))    # the means look bell-shaped
+
+The CLT is about the distribution of the **mean**, not of the data. Individual counts stay skewed; their average does not.
+
+### 5.3 Confidence intervals
+
+A 95% **confidence interval** is the estimate plus/minus a margin built from the SE:
+
+    x  <- read.csv(file.path("data","morphology.csv"))$body_length_mm
+    n  <- length(x)
+    est <- mean(x)
+    se  <- sd(x) / sqrt(n)
+    ci  <- est + c(-1, 1) * qt(0.975, df = n - 1) * se     # t-based (correct for any n)
+
+We use `qt()` (the t-distribution) not `qnorm()` because we estimated the SD from the data; the t-distribution’s slightly fatter tails account for that extra uncertainty, and it matters for small n (for large n, `qt` ≈ `qnorm` ≈ 1.96).
+
+**Interpretation — carefully.** “95% CI” means: if you repeated the study many times, 95% of the intervals computed this way would contain the true population mean. It does *not* mean “95% probability the true mean is in this particular interval” (the true mean is fixed; the interval is what’s random). In practice a CI tells you two useful things: a plausible range for the effect, and — by its width — how precise your estimate is.
+
+### 5.4 Confidence intervals over p-values
+
+A theme for the whole course: a **confidence interval is usually more informative than a p-value**. “Mean difference 0.7 mm, 95% CI \[0.28, 1.12\]” tells you the effect’s direction, size, *and* precision, and whether the plausible range includes biologically trivial values. “p = 0.0014” tells you only that the difference is detectable. Report effect sizes with CIs; use p-values as a supporting summary, not the headline. Part III builds the tests, but keep the estimate — not the p-value — as the goal.
+
+### 5.5 The bootstrap (a glimpse)
+
+When a statistic has no tidy SE formula (a median, a ratio, a diversity index), you can get its sampling distribution by **resampling your data with replacement**:
+
+    med_boot <- replicate(2000, median(sample(x, replace = TRUE)))
+    quantile(med_boot, c(0.025, 0.975))     # a 95% bootstrap CI for the median
+
+The bootstrap turns the simulation idea of 5.1 into a practical, assumption-light tool for uncertainty — invaluable when formulas run out.
+
+> **▶ Practise now — Module 5 → sections 5A–5B and the Part II capstone in** `PartII_exercises.R`**.**
+

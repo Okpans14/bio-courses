@@ -1,0 +1,260 @@
+---
+title: "Part I — Data & Description — Exercises"
+---
+
+Download the scripts: [exercises](../downloads/stats_PartI_exercises.R) · [solutions](../downloads/stats_PartI_solutions.R).  
+Work the exercises first; open the solutions only after trying.
+
+::: {.panel-tabset}
+
+## Exercises
+
+````r
+# =====================================================================
+# Statistics for Biologists — Part I Exercises
+# Modules 1-3 · Data & Description
+# =====================================================================
+# Assumes basic R + tidyverse. install.packages("tidyverse")
+# Uses data/morphology.csv (120 beetles, two sites, both sexes).
+# =====================================================================
+
+library(tidyverse)
+data_dir <- if (dir.exists("data")) "data" else "../data"
+morph <- read_csv(file.path(data_dir, "morphology.csv"))
+
+
+# =====================================================================
+# Module 1 - study design & types of data
+# =====================================================================
+
+## 1A. Variable types ---------------------------------------------------
+### Worked example - inspect types
+glimpse(morph)
+
+### 1A.1 (easy)
+# For each column of morph, state its statistical variable type
+# (continuous / count / nominal / ordinal / binary). Write your answers
+# as comments. Then confirm how R stores each with sapply(morph, class).
+# your answer + code here
+
+
+### 1A.2 (concept)
+# A study measures leaf area on 8 leaves from EACH of 3 trees, one tree
+# per treatment. How many independent replicates of the TREATMENT are
+# there? Is analysing 24 leaves as independent valid? Name the problem.
+# your answer here (comment)
+
+
+## 1B. response ~ explanatory -------------------------------------------
+### 1B.1 (easy)
+# For each question, write the response and the explanatory variable(s):
+#  (a) Does body length differ between sexes?
+#  (b) Does wing length increase with body length?
+#  (c) Does infection depend on dose and age?
+# your answers here (comments)
+
+
+# =====================================================================
+# Module 2 - descriptive statistics
+# =====================================================================
+
+## 2A. Central tendency & spread ----------------------------------------
+### Worked example
+cat("mean:", mean(morph$body_length_mm),
+    " median:", median(morph$body_length_mm), "\n")
+
+### 2A.1 (easy)
+# Compute the mean, median, SD, and IQR of mass_mg. Is mass roughly
+# symmetric (mean close to median) or skewed? Comment.
+# your code here
+
+
+## 2B. SD vs SE vs CI ---------------------------------------------------
+### 2B.1 (harder)
+# For body_length_mm compute: n, sd, the standard error (sd/sqrt(n)),
+# and a 95% CI for the mean using qt(0.975, df = n-1). Print all four.
+# your code here
+
+
+### 2B.2 (concept)
+# You collect 10x more beetles. Which of {SD, SE, 95% CI width} shrink,
+# and which stays about the same? Explain in one line.
+# your answer here (comment)
+
+
+## 2C. Grouped summaries ------------------------------------------------
+### 2C.1 (harder)
+# Produce a table with, FOR EACH sex: n, mean, sd, and se of
+# body_length_mm. Which sex is larger on average, and by how much?
+# your code here
+
+
+# =====================================================================
+# Module 3 - exploratory visualisation
+# =====================================================================
+
+## 3A. Distributions ----------------------------------------------------
+### Worked example
+ggplot(morph, aes(body_length_mm)) + geom_histogram(bins = 20)
+
+### 3A.1 (easy)
+# Make a histogram of mass_mg AND a boxplot of mass_mg by site.
+# From the plots, does mass look normal? Does it differ by site?
+# your code here
+
+
+## 3B. Relationships & QQ -----------------------------------------------
+### 3B.1 (harder)
+# Scatterplot wing_length_mm (y) vs body_length_mm (x) with an lm smooth.
+# Then make a QQ plot of body_length_mm. Comment on linearity and
+# normality from the pictures.
+# your code here
+
+
+# =====================================================================
+# Part I capstone - a one-page data summary
+# =====================================================================
+# For morphology.csv produce:
+#   1. a grouped summary table (n, mean, sd, se of body_length_mm by
+#      sex AND site - group_by(sex, site)),
+#   2. a boxplot of body_length_mm by sex, faceted by site, with points
+#      overlaid (geom_jitter) and proper labels,
+#   3. two sentences: what the data show descriptively, and ONE caution
+#      about reading too much into it before a formal test.
+# your code here
+
+````
+
+## Solutions
+
+````r
+# =====================================================================
+# Statistics for Biologists — Part I Solutions
+# Modules 1-3 · Data & Description
+# =====================================================================
+
+library(tidyverse)
+data_dir <- if (dir.exists("data")) "data" else "../data"
+morph <- read_csv(file.path(data_dir, "morphology.csv"))
+
+
+# =====================================================================
+# Module 1
+# =====================================================================
+
+## 1A.1 - variable types
+# id            : identifier (not a statistical variable)
+# site          : categorical, nominal (north/south)
+# sex           : binary categorical (F/M)
+# body_length_mm: continuous
+# wing_length_mm: continuous
+# mass_mg       : continuous
+print(sapply(morph, class))
+
+## 1A.2
+# Independent replicates of TREATMENT = 3 (one tree per treatment), NOT
+# 24. The 8 leaves within a tree are pseudoreplicates: they share that
+# tree's genotype and environment, so they are not independent. Treating
+# 24 leaves as independent inflates df and shrinks p-values wrongly.
+# Fix: one value per tree (mean leaf area), or a mixed model with tree
+# as a random effect (Part V).
+
+## 1B.1
+# (a) response = body_length_mm ; explanatory = sex
+# (b) response = wing_length_mm ; explanatory = body_length_mm
+# (c) response = infected       ; explanatory = dose_mg, age_months
+
+
+# =====================================================================
+# Module 2
+# =====================================================================
+
+## 2A.1
+with(morph, cat(sprintf(
+  "mass: mean=%.1f median=%.1f sd=%.1f IQR=%.1f\n",
+  mean(mass_mg), median(mass_mg), sd(mass_mg), IQR(mass_mg))))
+# mean and median are close -> mass is roughly symmetric, not strongly skewed.
+
+## 2B.1 - SD vs SE vs CI
+x  <- morph$body_length_mm
+n  <- length(x)
+se <- sd(x) / sqrt(n)
+ci <- mean(x) + c(-1, 1) * qt(0.975, df = n - 1) * se
+cat(sprintf("n=%d  sd=%.3f  se=%.3f  95%% CI=[%.2f, %.2f]\n",
+            n, sd(x), se, ci[1], ci[2]))
+# ~ mean 12.88, sd 1.20, se 0.109, CI about [12.67, 13.10]
+
+## 2B.2
+# With 10x more data: SE shrinks by ~sqrt(10) and the CI width with it;
+# the SD stays about the same (it describes biological spread, which
+# does not change just because you measured more individuals).
+
+## 2C.1 - grouped summary
+morph |>
+  group_by(sex) |>
+  summarise(n = n(), mean = mean(body_length_mm),
+            sd = sd(body_length_mm), se = sd / sqrt(n)) |>
+  print()
+# Females larger: mean ~13.21 vs males ~12.52, a difference of ~0.7 mm.
+# (Whether that is "real" is a test question - Part III.)
+
+
+# =====================================================================
+# Module 3
+# =====================================================================
+
+## 3A.1
+print(ggplot(morph, aes(mass_mg)) + geom_histogram(bins = 20) + theme_minimal())
+print(ggplot(morph, aes(site, mass_mg)) + geom_boxplot() + theme_minimal())
+# Mass looks approximately bell-shaped; south tends slightly heavier.
+
+## 3B.1
+print(
+  ggplot(morph, aes(body_length_mm, wing_length_mm)) +
+    geom_point() + geom_smooth(method = "lm") + theme_minimal()
+)
+print(
+  ggplot(morph, aes(sample = body_length_mm)) +
+    stat_qq() + stat_qq_line() + theme_minimal()
+)
+# wing rises linearly and tightly with body (a strong positive relation);
+# body_length points fall close to the QQ line -> approximately normal.
+
+
+# =====================================================================
+# Part I capstone
+# =====================================================================
+## 1. grouped summary
+summ <- morph |>
+  group_by(sex, site) |>
+  summarise(n = n(), mean = mean(body_length_mm),
+            sd = sd(body_length_mm), se = sd / sqrt(n), .groups = "drop")
+print(summ)
+
+## 2. plot: boxplot + points, faceted by site
+print(
+  ggplot(morph, aes(sex, body_length_mm, fill = sex)) +
+    geom_boxplot(alpha = 0.5, outlier.shape = NA) +
+    geom_jitter(width = 0.15, alpha = 0.6) +
+    facet_wrap(~ site) +
+    labs(title = "Body length by sex and site",
+         x = NULL, y = "body length (mm)") +
+    theme_minimal()
+)
+
+## 3. interpretation
+# Descriptively, females are a little larger than males, and southern
+# beetles a little larger than northern ones, consistent across panels.
+# CAUTION: these are sample differences with overlapping distributions;
+# whether they reflect real population differences needs a formal test
+# with its assumptions checked (Part III), not eyeballing the means.
+
+# ---------------------------------------------------------------------
+# Part I done: you can frame a question as response ~ predictors,
+# describe data honestly (SD vs SE vs CI), and SEE it before testing.
+# Part II: probability, sampling, and confidence intervals.
+# ---------------------------------------------------------------------
+
+````
+
+:::

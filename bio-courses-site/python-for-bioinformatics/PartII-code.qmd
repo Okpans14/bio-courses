@@ -1,0 +1,1691 @@
+---
+title: "Part II — Real Programming — Exercises"
+---
+
+Download the notebooks: [exercises](../downloads/python/py_PartII_exercises.ipynb) · [solutions](../downloads/python/py_PartII_solutions.ipynb). Example data is in [downloads/python/data](../downloads/python/data).
+
+::: {.panel-tabset}
+
+## Exercises
+
+<div id="baee039d" class="cell markdown">
+
+# Python for Bioinformatics — Part II Exercises
+
+## Modules 6–8 · Real Programming
+
+Work alongside the theory document, in order, following the green **▶ Practise now** pointers.
+
+**Setup:** make sure the `data/` folder (with `sample.fasta`, `sample.fastq`, `variants.csv`) sits in the **same folder** as this notebook. Run the cell below to confirm.
+
+</div>
+
+<div id="b9aa9896" class="cell code" execution_count="18">
+
+``` python
+import os
+for fn in ["data/sample.fasta", "data/sample.fastq", "data/variants.csv"]:
+    print(fn, "found" if os.path.exists(fn) else "MISSING — check folder location")
+```
+
+<div class="output stream stdout">
+
+    data/sample.fasta found
+    data/sample.fastq found
+    data/variants.csv found
+
+</div>
+
+</div>
+
+<div id="c24e0740" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 6 — Reading & writing files
+
+</div>
+
+<div id="044ab9aa" class="cell markdown">
+
+## 6A. Reading basics
+
+### Worked example
+
+</div>
+
+<div id="99b77c26" class="cell code" execution_count="24">
+
+``` python
+with open("data/sample.fasta") as f:
+    text = f.read()
+print("characters:", len(text))
+print("first 50:", text[:50])
+```
+
+<div class="output stream stdout">
+
+    characters: 495
+    first 50: >rpoB Salmonella Paratyphi B RNA polymerase beta s
+
+</div>
+
+</div>
+
+<div id="1a823406" class="cell markdown">
+
+### 6A.1 (easy)
+
+Open `data/sample.fasta` and, iterating line by line, count how many lines it has and how many are **header** lines (start with `>`). Print both counts. Remember to `.rstrip("\n")`.
+
+</div>
+
+<div id="f6e0019c" class="cell code" execution_count="30">
+
+``` python
+# your code here
+count = 0
+header = 0
+with open("data/sample.fasta") as f:
+    for line in f:
+        line = line.rstrip("\n")
+        count += 1
+        if line[0] == ">":
+            header += 1
+
+print(count, header)
+```
+
+<div class="output stream stdout">
+
+    10 3
+
+</div>
+
+</div>
+
+<div id="bb9f4bf5" class="cell markdown">
+
+### 6A.2 (harder)
+
+Read `data/sample.fasta` with `.readlines()`. Print the number of lines, then print only the header lines (those starting with `>`), with the leading `>` removed.
+
+</div>
+
+<div id="f5ebae15" class="cell code" execution_count="32">
+
+``` python
+# your code here
+count = 0
+with open("data/sample.fasta") as f:
+    for l in f:
+        line = l.rstrip("\n")
+        count += 1
+        if line[0] == ">":
+            print(line[1:])
+print(f"Number of lines: {count}")
+```
+
+<div class="output stream stdout">
+
+    rpoB Salmonella Paratyphi B RNA polymerase beta subunit
+    katG catalase-peroxidase
+    gyrA DNA gyrase subunit A
+    Number of lines: 10
+
+</div>
+
+</div>
+
+<div id="bf2628b6" class="cell markdown">
+
+## 6B. Parsing FASTA (core exercise)
+
+### Worked example — the canonical parser
+
+</div>
+
+<div id="59f64359" class="cell code" execution_count="1">
+
+``` python
+def read_fasta(path):
+    """Parse FASTA into {header: sequence}."""
+    sequences, header, parts = {}, None, []
+    with open(path) as f:
+        for line in f:
+            line = line.rstrip("\n")
+            if line.startswith(">"):
+                if header is not None:
+                    sequences[header] = "".join(parts)
+                header = line[1:]
+                parts = []
+            else:
+                parts.append(line)
+        if header is not None:
+            sequences[header] = "".join(parts)
+    return sequences
+
+records = read_fasta("data/sample.fasta")
+for h, s in records.items():
+    print(h[:20], "...", len(s), "bp")
+```
+
+<div class="output stream stdout">
+
+    rpoB Salmonella Para ... 120 bp
+    katG catalase-peroxi ... 150 bp
+    gyrA DNA gyrase subu ... 108 bp
+
+</div>
+
+</div>
+
+<div id="c331d5e9" class="cell markdown">
+
+### 6B.1 (easy)
+
+Using the `read_fasta` function above, print: how many sequences the file contains, and the length of the **katG** sequence (its header starts with `katG`). Hint: loop over `records.items()` and check `header.startswith("katG")`.
+
+</div>
+
+<div id="f5799438" class="cell code" execution_count="9">
+
+``` python
+records = read_fasta("data/sample.fasta")
+# your code here
+print(records)
+print("Number of sequences:",len(records))
+katG_length = len([header for header in records if header.startswith("katG")][0])
+print(f"Length of katG: {katG_length}")
+```
+
+<div class="output stream stdout">
+
+    {'rpoB Salmonella Paratyphi B RNA polymerase beta subunit': 'ATGGTTTACTCCTATACCGAGAAAAAACGTATTCGTAAGGATTTTGGTAAACGTCCGCAAGTTCTGGATGTACCGTATCTGCTGTCCATCCAGCTGGACTCCTTCCAGAAATTCCTGGAT', 'katG catalase-peroxidase': 'ATGCCCGAGCAGCACCCGCCGATTACCGAGACCACCACCGGCGCCGCCTCCAACGGCTGCGACCCGGTGGCCGCCGGCGAGCGCTGGTGGCCGAACCGCCTGAACCTGAAGGTGCTGCACCAGAACCCGGCGGTGGCCGACCCGATGGGC', 'gyrA DNA gyrase subunit A': 'ATGAGCGACCTTGCGAGAGAAATTACACCGGTCAACATTGAGGAAGAGCTGAAGAGCTCCTATCTGGATTATGCGATGTCGGTCATTGTTGGCCGTGCGCTGCCAGAT'}
+    Number of sequences: 3
+    Length of katG: 24
+
+</div>
+
+</div>
+
+<div id="927b67d8" class="cell markdown">
+
+### 6B.2 (harder)
+
+For every record, compute GC content and print a line `gene_id: NN.N% GC`. Use only the gene name (the first word of the header) — `header.split()[0]` gives it.
+
+</div>
+
+<div id="2f0f3beb" class="cell code" execution_count="10">
+
+``` python
+records = read_fasta("data/sample.fasta")
+# your code here
+
+for gen, seq in records.items():
+    gc = (seq.count("G") + seq.count("C")) / len(seq)
+    print(f"{gen.split()[0]} | {gc:.1%} GC")
+```
+
+<div class="output stream stdout">
+
+    rpoB | 44.2% GC
+    katG | 73.3% GC
+    gyrA | 50.9% GC
+
+</div>
+
+</div>
+
+<div id="0f5465b0" class="cell markdown">
+
+## 6C. Parsing FASTQ
+
+### Worked example — read four lines at a time
+
+</div>
+
+<div id="409368c7" class="cell code" execution_count="14">
+
+``` python
+def read_fastq(path):
+    """Yield (header, seq, qual) tuples from a FASTQ file."""
+    reads = []
+    with open(path) as f:
+        lines = [ln.rstrip("\n") for ln in f]
+    for i in range(0, len(lines), 4):
+        header = lines[i][1:]      # drop '@'
+        seq    = lines[i+1]
+        qual   = lines[i+3]        # lines[i+2] is the '+'
+        reads.append((header, seq, qual))
+    return reads
+
+for header, seq, qual in read_fastq("data/sample.fastq"):
+    print(header, seq, qual)
+```
+
+<div class="output stream stdout">
+
+    read1 ATGCGTACGTTAGC IIIIIIIIIIIIII
+    read2 GGCATTAGCCGTAA IIIIIHHHGGFFEE
+    read3 TTTAAACCCGGGAT ##$%&'()*+,-./
+    read4 ACGTACGTACGTAC IIIIIIIIIIIIII
+
+</div>
+
+</div>
+
+<div id="f053eaab" class="cell markdown">
+
+### 6C.1 (easy)
+
+Write `phred(char)` returning the Phred+33 score (`ord(char) - 33`). Test it: print the score of `"I"` (should be 40) and `"#"` (should be 2).
+
+</div>
+
+<div id="5c986d82" class="cell code" execution_count="18">
+
+``` python
+# your code here
+def phred(char):
+    return (ord(char) - 33)
+
+print(phred("I"),",", phred("#"))
+```
+
+<div class="output stream stdout">
+
+    40 , 2
+
+</div>
+
+</div>
+
+<div id="89980462" class="cell markdown">
+
+### 6C.2 (harder)
+
+For each read in `data/sample.fastq`, compute its **mean quality** (average Phred+33 score across the quality string) and print `read_id: mean_qual` rounded to one decimal.
+
+</div>
+
+<div id="bbd28bb6" class="cell code" execution_count="32">
+
+``` python
+reads = read_fastq("data/sample.fastq")
+# your code here
+def mean_quality(q):
+    mean = sum(phred(p) for p in q)/len(q)
+    return mean
+
+for read, seq, q in reads:
+    print(f"{read.split()[0]}: {mean_quality(q):.1f}")
+```
+
+<div class="output stream stdout">
+
+    read1: 40.0
+    read2: 38.5
+    read3: 7.6
+    read4: 40.0
+
+</div>
+
+</div>
+
+<div id="9f18bd61" class="cell markdown">
+
+### 6C.3 (challenge — quality filter)
+
+Print only the reads whose mean quality is **\>= 30**, showing the read id and its mean quality. (read3 should be filtered out.)
+
+</div>
+
+<div id="264f83b7" class="cell code" execution_count="33">
+
+``` python
+reads = read_fastq("data/sample.fastq")
+# your code here
+
+for read, seq, q in reads:
+    mean = mean_quality(q)
+    if mean >= 30:
+        print(f"{read.split()[0]}: {mean:.1f}")
+```
+
+<div class="output stream stdout">
+
+    read1: 40.0
+    read2: 38.5
+    read4: 40.0
+
+</div>
+
+</div>
+
+<div id="52a023e5" class="cell markdown">
+
+## 6D. CSV / tabular data
+
+### Worked example
+
+</div>
+
+<div id="85cfd53e" class="cell code" execution_count="38">
+
+``` python
+import csv
+with open("data/variants.csv") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        print(row["gene"], row["position"], row["quality"])
+```
+
+<div class="output stream stdout">
+
+    rpoB 1349 45.2
+    katG 944 38.7
+    gyrA 248 52.1
+    gyrA 259 29.4
+    pncA 169 41.0
+
+</div>
+
+</div>
+
+<div id="dec6a2fc" class="cell markdown">
+
+### 6D.1 (easy)
+
+Read `data/variants.csv` with `csv.DictReader` and print only the `gene` and `alt` allele of each variant.
+
+</div>
+
+<div id="0824f796" class="cell code">
+
+``` python
+# your code here
+with open("data/variants.csv") as f:
+    reader = csv.DictReader(f)
+    for l in reader:
+        print(f"{l["gene"]} | {l["alt"]}")
+```
+
+<div class="output stream stdout">
+
+    {'gene': 'rpoB', 'position': '1349', 'ref': 'C', 'alt': 'T', 'quality': '45.2'}
+    1349
+    rpoB | T
+    {'gene': 'katG', 'position': '944', 'ref': 'G', 'alt': 'C', 'quality': '38.7'}
+    944
+    katG | C
+    {'gene': 'gyrA', 'position': '248', 'ref': 'A', 'alt': 'G', 'quality': '52.1'}
+    248
+    gyrA | G
+    {'gene': 'gyrA', 'position': '259', 'ref': 'T', 'alt': 'C', 'quality': '29.4'}
+    259
+    gyrA | C
+    {'gene': 'pncA', 'position': '169', 'ref': 'G', 'alt': 'A', 'quality': '41.0'}
+    169
+    pncA | A
+
+</div>
+
+</div>
+
+<div id="eb85d542" class="cell markdown">
+
+### 6D.2 (harder — convert and filter)
+
+The `quality` column arrives as a **string**. Convert it to `float` and print only variants with quality **\>= 40.0**, formatted as `gene position quality`.
+
+</div>
+
+<div id="109f23e7" class="cell code" execution_count="58">
+
+``` python
+# your code here
+with open("data/variants.csv") as f:
+    reader = csv.DictReader(f)
+    for l in reader:
+        q = float(l["quality"])
+        if q >= 40:
+            print(f"{l["gene"]} | {l["position"]} | {l["quality"]}")
+```
+
+<div class="output stream stdout">
+
+    rpoB | 1349 | 45.2
+    gyrA | 248 | 52.1
+    pncA | 169 | 41.0
+
+</div>
+
+</div>
+
+<div id="b4db4ff8" class="cell markdown">
+
+### Module 6 CHALLENGE — FASTA → GC report writer
+
+Read `data/sample.fasta`, compute GC content per gene, and **write** a tab-separated file `gc_report.tsv` with a header row `gene\tgc` and one row per gene (GC as a 3-decimal fraction). Then read your file back and print it to confirm. This ties reading + writing together.
+
+</div>
+
+<div id="f71c4be5" class="cell code" execution_count="87">
+
+``` python
+# your code here
+def write_gc_table(fa, table):
+    fasta = read_fasta(fa)
+    with open(table, "w") as f:
+        f.write("gene\tgc\n")
+        for g, s in fasta.items():
+            gc = (s.count("G") + s.count("C")) / len(s)
+            f.write(f"{g.split()[0]}\t{gc:.3f}\n")
+
+write_gc_table("data/sample.fasta", "data/gc_report.tsv")
+
+with open("data/gc_report.tsv") as f:
+    for l in f:
+        line = l.strip("\n")
+        print(line)
+```
+
+<div class="output stream stdout">
+
+    gene	gc
+    rpoB	0.442
+    katG	0.733
+    gyrA	0.509
+
+</div>
+
+</div>
+
+<div id="321e38ed" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 7 — Errors, debugging & testing
+
+</div>
+
+<div id="8d9531b4" class="cell markdown">
+
+## 7A. Read tracebacks
+
+### Worked example (this cell is *meant* to error — read the traceback bottom-up)
+
+</div>
+
+<div id="7baa50e8" class="cell code" execution_count="16">
+
+``` python
+seq = "ATGCGT"
+print(seq[10])   # IndexError
+```
+
+<div class="output error" ename="IndexError" evalue="string index out of range">
+
+    ---------------------------------------------------------------------------
+    IndexError                                Traceback (most recent call last)
+    Cell In[16], line 2
+          1 seq = "ATGCGT"
+    ----> 2 print(seq[10])   # IndexError
+
+    IndexError: string index out of range
+
+</div>
+
+</div>
+
+<div id="7f8a40e7" class="cell markdown">
+
+### 7A.1 (easy)
+
+Write code that deliberately triggers each of these, one per line in **separate** cells if you like, and note the error type from the traceback: (a) a `KeyError`, (b) a `ValueError` from `int("abc")`, (c) a `ZeroDivisionError`. You don't need to handle them yet — just observe.
+
+</div>
+
+<div id="e657da5e" class="cell code">
+
+``` python
+# (a) KeyError
+d = {"A": 1}
+# your code here
+```
+
+</div>
+
+<div id="2727a405" class="cell code">
+
+``` python
+# (b) ValueError
+# your code here
+```
+
+</div>
+
+<div id="f2919c2f" class="cell code">
+
+``` python
+# (c) ZeroDivisionError
+# your code here
+```
+
+</div>
+
+<div id="a99a1e12" class="cell markdown">
+
+## 7B. try/except & raise
+
+### Worked example
+
+</div>
+
+<div id="07dbc136" class="cell code">
+
+``` python
+def safe_gc(seq):
+    try:
+        seq = seq.upper()
+        return (seq.count("G") + seq.count("C")) / len(seq)
+    except ZeroDivisionError:
+        return None
+
+print(safe_gc("ATGC"), safe_gc(""))
+```
+
+</div>
+
+<div id="c7f02bf8" class="cell markdown">
+
+### 7B.1 (easy)
+
+Write `safe_open(path)` that tries to open and read a file, returning its length, but catches `FileNotFoundError` and returns the string `"missing"` instead. Test on `"data/sample.fasta"` and on `"data/nope.txt"`.
+
+</div>
+
+<div id="d177499f" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="0786d802" class="cell markdown">
+
+### 7B.2 (harder — validate & raise)
+
+Write `gc_content(seq)` that:
+
+- raises `ValueError` if the sequence contains anything other than A/C/G/T (case-insensitive),
+- raises `ValueError` if the sequence is empty,
+- otherwise returns the GC fraction.
+
+Test it: call it on `"ATGC"` (works), and use try/except to show the error message for `"ATBX"` and for `""`.
+
+</div>
+
+<div id="ae2d88d0" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="84919a23" class="cell markdown">
+
+## 7C. Debugging
+
+### Worked example — a planted bug
+
+The function below is supposed to count codons but gives the wrong answer for `"ATGAAAC"`. Run it, then debug.
+
+</div>
+
+<div id="1eae67c7" class="cell code">
+
+``` python
+def count_codons_buggy(seq):
+    count = 0
+    for i in range(0, len(seq), 3):
+        count += 1
+    return count
+
+print(count_codons_buggy("ATGAAAC"))   # returns 3, but only 2 *complete* codons exist
+```
+
+</div>
+
+<div id="20555705" class="cell markdown">
+
+### 7C.1 (easy — find & fix)
+
+Fix `count_codons` so it counts only **complete** codons (groups of exactly 3). For `"ATGAAAC"` (7 bases) the answer should be 2. First add a `print(i, seq[i:i+3])` inside the loop to *see* the problem, then fix it.
+
+</div>
+
+<div id="8ac01a75" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="c1ff4e9f" class="cell markdown">
+
+### 7C.2 (harder — assertions)
+
+Write `translate_frame(seq)` that asserts (with a message) the sequence length is a multiple of 3 before translating. Show it raising `AssertionError` on `"ATGAA"` and working on `"ATGAAA"` (you can return a placeholder like the codon list).
+
+</div>
+
+<div id="5092833d" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="dd927095" class="cell markdown">
+
+## 7D. Testing
+
+### Worked example — assert-based checks
+
+</div>
+
+<div id="46385016" class="cell code">
+
+``` python
+def reverse_complement(seq):
+    return seq.upper().translate(str.maketrans("ACGT", "TGCA"))[::-1]
+
+assert reverse_complement("ATGC") == "GCAT"
+assert reverse_complement("") == ""
+print("checks passed")
+```
+
+</div>
+
+<div id="3f1b4dba" class="cell markdown">
+
+### 7D.1 (easy)
+
+Write at least four `assert` checks for a `gc_content` function: an all-GC sequence (1.0), an all-AT sequence (0.0), a mixed sequence, and a lowercase input. Define `gc_content` first (no validation needed here).
+
+</div>
+
+<div id="2bd41816" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="b0833dc5" class="cell markdown">
+
+### 7D.2 (harder — pytest style)
+
+Rewrite your checks as `pytest`-style test **functions** (named `test_*`) in this notebook and call them manually. Include one test using a try/except to confirm that an invalid input raises `ValueError` (simulating `pytest.raises`).
+
+In real life these go in a `test_seqtools.py` file run with `pytest` from the terminal — but defining and calling them here proves the logic.
+
+</div>
+
+<div id="d37c4b85" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="8f3fd8ad" class="cell markdown">
+
+### Module 7 CHALLENGE — harden seqtools.py
+
+Take your `seqtools.py` from Part I (or recreate the functions here) and:
+
+1.  add input validation to `gc_content` and `reverse_complement` (raise `ValueError` on invalid DNA),
+2.  write a set of `test_*` functions covering normal cases, edge cases (empty), and the error path,
+3.  run all your tests and print a summary.
+
+This is the professional pattern you'll use for your capstone tool.
+
+</div>
+
+<div id="cd5f469c" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="f0b49925" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 8 — Object-oriented programming
+
+</div>
+
+<div id="c39b6b9b" class="cell markdown">
+
+## 8A. Your first class
+
+### Worked example
+
+</div>
+
+<div id="3acef5f9" class="cell code">
+
+``` python
+class Sequence:
+    def __init__(self, identifier, seq):
+        self.id = identifier
+        self.seq = seq.upper()
+    def __len__(self):
+        return len(self.seq)
+    def gc_content(self):
+        if len(self.seq) == 0:
+            return None
+        g = self.seq.count("G") + self.seq.count("C")
+        return g / len(self.seq)
+
+s = Sequence("rpoB", "atgcgc")
+print(s.id, len(s), s.gc_content())
+```
+
+</div>
+
+<div id="759cae34" class="cell markdown">
+
+### 8A.1 (easy)
+
+Extend the `Sequence` class with a `reverse_complement()` method that returns a **new** `Sequence` (id with `"_rc"` appended). Test: print the seq of `Sequence("g1","ATGC").reverse_complement()` (should be `GCAT`).
+
+</div>
+
+<div id="4442dc99" class="cell code">
+
+``` python
+# your code here — define the class, then test
+```
+
+</div>
+
+<div id="98a683e0" class="cell markdown">
+
+### 8A.2 (harder)
+
+Add a `transcribe()` method returning the mRNA string (T→U), and a `composition()` method returning a dict of base counts. Test both on `Sequence("g1", "ATGCGT")`.
+
+</div>
+
+<div id="6d93fac9" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="c5e93600" class="cell markdown">
+
+## 8B. Dunder methods
+
+### Worked example
+
+</div>
+
+<div id="00745770" class="cell code">
+
+``` python
+class Sequence:
+    def __init__(self, identifier, seq):
+        self.id, self.seq = identifier, seq.upper()
+    def __len__(self): return len(self.seq)
+    def __str__(self): return f"{self.id}: {self.seq}"
+    def __repr__(self): return f"Sequence({self.id!r}, {self.seq!r})"
+    def __getitem__(self, index): return self.seq[index]
+
+s = Sequence("rpoB", "ATGCGC")
+print(s)          # __str__
+print(repr(s))    # __repr__
+print(s[0:3])     # __getitem__
+```
+
+</div>
+
+<div id="86dbc9a3" class="cell markdown">
+
+### 8B.1 (easy)
+
+Build a `Sequence` class with `__init__`, `__len__`, and `__str__` so that `print(Sequence("g1","atgc"))` shows `g1: ATGC`.
+
+</div>
+
+<div id="601ea63f" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="5236c61e" class="cell markdown">
+
+### 8B.2 (harder)
+
+Add `__eq__` so two `Sequence` objects are equal when their **sequences** match (ignore the id). Test: `Sequence("a","ATGC") == Sequence("b","atgc")` should be `True`, and `== Sequence("c","TTTT")` should be `False`.
+
+</div>
+
+<div id="b4dd55cf" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="72ff704e" class="cell markdown">
+
+## 8C. Inheritance
+
+### Worked example
+
+</div>
+
+<div id="e3a3242a" class="cell code">
+
+``` python
+class Sequence:
+    def __init__(self, identifier, seq):
+        self.id, self.seq = identifier, seq.upper()
+    def gc_content(self):
+        g = self.seq.count("G") + self.seq.count("C")
+        return g / len(self.seq) if self.seq else None
+
+class FastqRead(Sequence):
+    def __init__(self, identifier, seq, qual):
+        super().__init__(identifier, seq)
+        self.qual = qual
+    def mean_quality(self):
+        scores = [ord(c) - 33 for c in self.qual]
+        return sum(scores) / len(scores)
+
+r = FastqRead("read1", "ATGC", "IIII")
+print(r.gc_content(), r.mean_quality())
+```
+
+</div>
+
+<div id="793dfb5f" class="cell markdown">
+
+### 8C.1 (easy)
+
+Create a `FastqRead` from the first read of `data/sample.fastq` (use your `read_fastq` from Module 6, or hardcode read1). Print its GC content (inherited) and mean quality (new).
+
+</div>
+
+<div id="a7032903" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="3d262939" class="cell markdown">
+
+### 8C.2 (harder)
+
+Add a `passes_filter(self, min_q=30)` method to `FastqRead` returning `True` if mean quality \>= `min_q`. Test on a high-quality and a low-quality read.
+
+</div>
+
+<div id="a7532391" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="13bfe6f1" class="cell markdown">
+
+------------------------------------------------------------------------
+
+## PART II CAPSTONE — object-oriented FASTA toolkit
+
+Build a small, tested, object-oriented module. In code:
+
+1.  A `Sequence` class with `__init__`, `__len__`, `__str__`, `gc_content()`, `reverse_complement()`, and input validation (raise `ValueError` on non-ACGT).
+2.  A function `load_fasta(path)` that parses a FASTA file and returns a **list of `Sequence` objects**.
+3.  At least three `test_*` functions: one for `gc_content`, one for `reverse_complement`, one confirming invalid input raises `ValueError`. Run them.
+4.  Use `load_fasta("data/sample.fasta")` and print a report: for each `Sequence`, its id, length, and GC%.
+
+When this runs cleanly with passing tests, you've completed Part II — you can read real files, write robust validated code with tests, and structure it with classes. This is essentially the skeleton of a real bioinformatics tool.
+
+</div>
+
+<div id="7423cde8" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+
+## Solutions
+
+<div id="ce1b9f47" class="cell markdown">
+
+# Python for Bioinformatics — Part II Solutions
+
+## Modules 6–8
+
+Reference solutions with commentary. Run from the folder containing `data/`. More than one correct approach usually exists.
+
+</div>
+
+<div id="43315839" class="cell markdown">
+
+First, the two parsers we reuse throughout (from the Module 6 worked examples).
+
+</div>
+
+<div id="cfeec949" class="cell code">
+
+``` python
+def read_fasta(path):
+    sequences, header, parts = {}, None, []
+    with open(path) as f:
+        for line in f:
+            line = line.rstrip("\n")
+            if line.startswith(">"):
+                if header is not None:
+                    sequences[header] = "".join(parts)
+                header = line[1:]; parts = []
+            else:
+                parts.append(line)
+        if header is not None:
+            sequences[header] = "".join(parts)
+    return sequences
+
+def read_fastq(path):
+    reads = []
+    with open(path) as f:
+        lines = [ln.rstrip("\n") for ln in f]
+    for i in range(0, len(lines), 4):
+        reads.append((lines[i][1:], lines[i+1], lines[i+3]))
+    return reads
+print("parsers ready")
+```
+
+</div>
+
+<div id="b6a2dc77" class="cell markdown">
+
+## Module 6
+
+</div>
+
+<div id="7c04071b" class="cell markdown">
+
+**6A.1**
+
+</div>
+
+<div id="531438ec" class="cell code">
+
+``` python
+total = headers = 0
+with open("data/sample.fasta") as f:
+    for line in f:
+        line = line.rstrip("\n")
+        total += 1
+        if line.startswith(">"):
+            headers += 1
+print(f"{total} lines, {headers} headers")
+```
+
+</div>
+
+<div id="6b197616" class="cell markdown">
+
+**6A.2**
+
+</div>
+
+<div id="fd98bb35" class="cell code">
+
+``` python
+with open("data/sample.fasta") as f:
+    lines = f.readlines()
+print("lines:", len(lines))
+for line in lines:
+    line = line.rstrip("\n")
+    if line.startswith(">"):
+        print(line[1:])
+```
+
+</div>
+
+<div id="6940b053" class="cell markdown">
+
+**6B.1**
+
+</div>
+
+<div id="15b95a26" class="cell code">
+
+``` python
+records = read_fasta("data/sample.fasta")
+print("sequences:", len(records))
+for header, seq in records.items():
+    if header.startswith("katG"):
+        print("katG length:", len(seq))
+```
+
+</div>
+
+<div id="d2b00a91" class="cell markdown">
+
+**6B.2**
+
+</div>
+
+<div id="d9a5f990" class="cell code">
+
+``` python
+records = read_fasta("data/sample.fasta")
+for header, seq in records.items():
+    gene = header.split()[0]
+    gc = (seq.count("G") + seq.count("C")) / len(seq)
+    print(f"{gene}: {gc:.1%} GC")
+```
+
+</div>
+
+<div id="04650ca7" class="cell markdown">
+
+**6C.1**
+
+</div>
+
+<div id="7826d7fb" class="cell code">
+
+``` python
+def phred(char):
+    return ord(char) - 33
+print(phred("I"), phred("#"))   # 40 2
+```
+
+</div>
+
+<div id="3d064d45" class="cell markdown">
+
+**6C.2**
+
+</div>
+
+<div id="83a4fa35" class="cell code">
+
+``` python
+reads = read_fastq("data/sample.fastq")
+for header, seq, qual in reads:
+    mean_q = sum(ord(c) - 33 for c in qual) / len(qual)
+    print(f"{header}: {mean_q:.1f}")
+```
+
+</div>
+
+<div id="d9ae96ba" class="cell markdown">
+
+**6C.3** — quality filter (read3 drops out).
+
+</div>
+
+<div id="8126c9d9" class="cell code">
+
+``` python
+reads = read_fastq("data/sample.fastq")
+for header, seq, qual in reads:
+    mean_q = sum(ord(c) - 33 for c in qual) / len(qual)
+    if mean_q >= 30:
+        print(f"{header}: {mean_q:.1f}")
+```
+
+</div>
+
+<div id="3e45413f" class="cell markdown">
+
+**6D.1**
+
+</div>
+
+<div id="b60d8e3d" class="cell code">
+
+``` python
+import csv
+with open("data/variants.csv") as f:
+    for row in csv.DictReader(f):
+        print(row["gene"], row["alt"])
+```
+
+</div>
+
+<div id="d3e8c061" class="cell markdown">
+
+**6D.2** — convert string to float, then filter.
+
+</div>
+
+<div id="b5190212" class="cell code">
+
+``` python
+import csv
+with open("data/variants.csv") as f:
+    for row in csv.DictReader(f):
+        q = float(row["quality"])
+        if q >= 40.0:
+            print(row["gene"], row["position"], q)
+```
+
+</div>
+
+<div id="05e18f01" class="cell markdown">
+
+**Module 6 challenge** — FASTA → GC report writer, then read back.
+
+</div>
+
+<div id="16bba6ac" class="cell code">
+
+``` python
+records = read_fasta("data/sample.fasta")
+with open("gc_report.tsv", "w") as f:
+    f.write("gene\tgc\n")
+    for header, seq in records.items():
+        gene = header.split()[0]
+        gc = (seq.count("G") + seq.count("C")) / len(seq)
+        f.write(f"{gene}\t{gc:.3f}\n")
+
+print("--- gc_report.tsv ---")
+with open("gc_report.tsv") as f:
+    print(f.read())
+```
+
+</div>
+
+<div id="83256d7b" class="cell markdown">
+
+## Module 7
+
+</div>
+
+<div id="2ec11c50" class="cell markdown">
+
+**7A.1** — deliberate errors, wrapped so the notebook keeps running.
+
+</div>
+
+<div id="bf6b2cda" class="cell code">
+
+``` python
+d = {"A": 1}
+try:
+    d["Z"]
+except KeyError as e:
+    print("KeyError:", e)
+try:
+    int("abc")
+except ValueError as e:
+    print("ValueError:", e)
+try:
+    1 / 0
+except ZeroDivisionError as e:
+    print("ZeroDivisionError:", e)
+```
+
+</div>
+
+<div id="ef4339e6" class="cell markdown">
+
+**7B.1**
+
+</div>
+
+<div id="d9606c96" class="cell code">
+
+``` python
+def safe_open(path):
+    try:
+        with open(path) as f:
+            return len(f.read())
+    except FileNotFoundError:
+        return "missing"
+
+print(safe_open("data/sample.fasta"))
+print(safe_open("data/nope.txt"))
+```
+
+</div>
+
+<div id="ab68ad95" class="cell markdown">
+
+**7B.2** — validate and raise.
+
+</div>
+
+<div id="dcb87194" class="cell code">
+
+``` python
+def gc_content(seq):
+    seq = seq.upper()
+    if len(seq) == 0:
+        raise ValueError("Empty sequence has no GC content")
+    if not set(seq) <= {"A", "C", "G", "T"}:
+        bad = set(seq) - {"A", "C", "G", "T"}
+        raise ValueError(f"Invalid bases: {bad}")
+    return (seq.count("G") + seq.count("C")) / len(seq)
+
+print(gc_content("ATGC"))
+for test in ["ATBX", ""]:
+    try:
+        gc_content(test)
+    except ValueError as e:
+        print(f"{test!r} ->", e)
+```
+
+</div>
+
+<div id="3312549f" class="cell markdown">
+
+**7C.1** — the fix: only count complete codons.
+
+</div>
+
+<div id="4c891e98" class="cell code">
+
+``` python
+def count_codons(seq):
+    count = 0
+    for i in range(0, len(seq), 3):
+        if len(seq[i:i+3]) == 3:    # only complete codons
+            count += 1
+    return count
+# cleaner equivalent: len(seq) // 3
+print(count_codons("ATGAAAC"))     # 2
+print("alt:", len("ATGAAAC") // 3) # 2
+```
+
+</div>
+
+<div id="d06e4d85" class="cell markdown">
+
+**7C.2** — assertion before translating.
+
+</div>
+
+<div id="96ae0ad8" class="cell code">
+
+``` python
+def translate_frame(seq):
+    assert len(seq) % 3 == 0, f"length {len(seq)} not a multiple of 3"
+    return [seq[i:i+3] for i in range(0, len(seq), 3)]
+
+print(translate_frame("ATGAAA"))
+try:
+    translate_frame("ATGAA")
+except AssertionError as e:
+    print("AssertionError:", e)
+```
+
+</div>
+
+<div id="b1a52889" class="cell markdown">
+
+**7D.1** — assert checks.
+
+</div>
+
+<div id="025d77c7" class="cell code">
+
+``` python
+def gc_content(seq):
+    seq = seq.upper()
+    return (seq.count("G") + seq.count("C")) / len(seq)
+
+assert gc_content("GCGC") == 1.0
+assert gc_content("ATAT") == 0.0
+assert gc_content("ATGC") == 0.5
+assert gc_content("atgc") == 0.5     # lowercase handled
+print("all checks passed")
+```
+
+</div>
+
+<div id="0ed03856" class="cell markdown">
+
+**7D.2** — pytest-style functions, called manually.
+
+</div>
+
+<div id="9a0e7dfd" class="cell code">
+
+``` python
+def gc_content(seq):
+    seq = seq.upper()
+    if not seq:
+        raise ValueError("empty")
+    if not set(seq) <= set("ACGT"):
+        raise ValueError("invalid")
+    return (seq.count("G") + seq.count("C")) / len(seq)
+
+def test_gc_basic():
+    assert gc_content("GCGC") == 1.0
+    assert gc_content("ATAT") == 0.0
+
+def test_gc_lowercase():
+    assert gc_content("gc") == 1.0
+
+def test_gc_invalid_raises():
+    try:
+        gc_content("ATBX")
+    except ValueError:
+        return
+    raise AssertionError("expected ValueError")
+
+for test in [test_gc_basic, test_gc_lowercase, test_gc_invalid_raises]:
+    test()
+    print(test.__name__, "PASSED")
+```
+
+</div>
+
+<div id="2ae61f36" class="cell markdown">
+
+**Module 7 challenge** — hardened seqtools + tests.
+
+</div>
+
+<div id="5a183ab9" class="cell code">
+
+``` python
+def _validate(seq):
+    seq = seq.upper()
+    if not seq:
+        raise ValueError("empty sequence")
+    if not set(seq) <= set("ACGT"):
+        raise ValueError(f"invalid bases: {set(seq) - set('ACGT')}")
+    return seq
+
+def gc_content(seq):
+    seq = _validate(seq)
+    return (seq.count("G") + seq.count("C")) / len(seq)
+
+def reverse_complement(seq):
+    seq = _validate(seq)
+    return seq.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+
+def test_gc():
+    assert gc_content("GCGC") == 1.0
+    assert gc_content("ATGC") == 0.5
+
+def test_revcomp():
+    assert reverse_complement("ATGC") == "GCAT"
+    assert reverse_complement("ATGCAT") == "ATGCAT"   # palindrome
+
+def test_errors():
+    for fn in (gc_content, reverse_complement):
+        try:
+            fn("ATBX")
+        except ValueError:
+            continue
+        raise AssertionError(f"{fn.__name__} should reject invalid input")
+
+passed = 0
+for test in [test_gc, test_revcomp, test_errors]:
+    test(); passed += 1
+print(f"{passed}/3 tests passed")
+```
+
+</div>
+
+<div id="26a55afa" class="cell markdown">
+
+## Module 8
+
+</div>
+
+<div id="80c2de76" class="cell markdown">
+
+**8A.1** — Sequence with reverse_complement returning a new Sequence.
+
+</div>
+
+<div id="52f1183e" class="cell code">
+
+``` python
+class Sequence:
+    def __init__(self, identifier, seq):
+        self.id = identifier
+        self.seq = seq.upper()
+    def __len__(self):
+        return len(self.seq)
+    def gc_content(self):
+        if not self.seq: return None
+        return (self.seq.count("G") + self.seq.count("C")) / len(self.seq)
+    def reverse_complement(self):
+        rc = self.seq.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+        return Sequence(self.id + "_rc", rc)
+
+print(Sequence("g1", "ATGC").reverse_complement().seq)   # GCAT
+```
+
+</div>
+
+<div id="a145fa34" class="cell markdown">
+
+**8A.2** — transcribe and composition.
+
+</div>
+
+<div id="c723aa23" class="cell code">
+
+``` python
+class Sequence:
+    def __init__(self, identifier, seq):
+        self.id, self.seq = identifier, seq.upper()
+    def transcribe(self):
+        return self.seq.replace("T", "U")
+    def composition(self):
+        counts = {}
+        for base in self.seq:
+            counts[base] = counts.get(base, 0) + 1
+        return counts
+
+s = Sequence("g1", "ATGCGT")
+print(s.transcribe())       # AUGCGU
+print(s.composition())
+```
+
+</div>
+
+<div id="287cdca5" class="cell markdown">
+
+**8B.1**
+
+</div>
+
+<div id="6e462efe" class="cell code">
+
+``` python
+class Sequence:
+    def __init__(self, identifier, seq):
+        self.id, self.seq = identifier, seq.upper()
+    def __len__(self):
+        return len(self.seq)
+    def __str__(self):
+        return f"{self.id}: {self.seq}"
+
+print(Sequence("g1", "atgc"))   # g1: ATGC
+```
+
+</div>
+
+<div id="690e2fd5" class="cell markdown">
+
+**8B.2** — equality by sequence.
+
+</div>
+
+<div id="cb4b1b09" class="cell code">
+
+``` python
+class Sequence:
+    def __init__(self, identifier, seq):
+        self.id, self.seq = identifier, seq.upper()
+    def __eq__(self, other):
+        return self.seq == other.seq
+
+print(Sequence("a", "ATGC") == Sequence("b", "atgc"))   # True
+print(Sequence("a", "ATGC") == Sequence("c", "TTTT"))   # False
+```
+
+</div>
+
+<div id="37cc4084" class="cell markdown">
+
+**8C.1**
+
+</div>
+
+<div id="5a14b8ff" class="cell code">
+
+``` python
+class Sequence:
+    def __init__(self, identifier, seq):
+        self.id, self.seq = identifier, seq.upper()
+    def gc_content(self):
+        return (self.seq.count("G") + self.seq.count("C")) / len(self.seq) if self.seq else None
+
+class FastqRead(Sequence):
+    def __init__(self, identifier, seq, qual):
+        super().__init__(identifier, seq)
+        self.qual = qual
+    def mean_quality(self):
+        return sum(ord(c) - 33 for c in self.qual) / len(self.qual)
+
+header, seq, qual = read_fastq("data/sample.fastq")[0]
+r = FastqRead(header, seq, qual)
+print(r.id, r.gc_content(), r.mean_quality())
+```
+
+</div>
+
+<div id="04a77806" class="cell markdown">
+
+**8C.2** — passes_filter.
+
+</div>
+
+<div id="f8e81bef" class="cell code">
+
+``` python
+class FastqRead(Sequence):
+    def __init__(self, identifier, seq, qual):
+        super().__init__(identifier, seq)
+        self.qual = qual
+    def mean_quality(self):
+        return sum(ord(c) - 33 for c in self.qual) / len(self.qual)
+    def passes_filter(self, min_q=30):
+        return self.mean_quality() >= min_q
+
+reads = [FastqRead(h, s_, q) for h, s_, q in read_fastq("data/sample.fastq")]
+for r in reads:
+    print(r.id, round(r.mean_quality(), 1), r.passes_filter())
+```
+
+</div>
+
+<div id="c7dafc79" class="cell markdown">
+
+**Part II capstone** — object-oriented, validated, tested FASTA toolkit.
+
+</div>
+
+<div id="b4c7a62e" class="cell code">
+
+``` python
+class Sequence:
+    def __init__(self, identifier, seq):
+        seq = seq.upper()
+        if not set(seq) <= set("ACGT"):
+            raise ValueError(f"{identifier}: invalid bases {set(seq) - set('ACGT')}")
+        self.id = identifier
+        self.seq = seq
+    def __len__(self):
+        return len(self.seq)
+    def __str__(self):
+        return f"{self.id} ({len(self)} bp)"
+    def gc_content(self):
+        return (self.seq.count("G") + self.seq.count("C")) / len(self.seq) if self.seq else None
+    def reverse_complement(self):
+        rc = self.seq.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+        return Sequence(self.id + "_rc", rc)
+
+def load_fasta(path):
+    seqs = []
+    for header, seq in read_fasta(path).items():
+        seqs.append(Sequence(header.split()[0], seq))
+    return seqs
+
+def test_gc():
+    assert Sequence("t", "GCGC").gc_content() == 1.0
+
+def test_revcomp():
+    assert Sequence("t", "ATGC").reverse_complement().seq == "GCAT"
+
+def test_invalid_raises():
+    try:
+        Sequence("t", "ATBX")
+    except ValueError:
+        return
+    raise AssertionError("expected ValueError")
+
+for test in [test_gc, test_revcomp, test_invalid_raises]:
+    test()
+print("3/3 tests passed\n")
+
+print("--- FASTA report ---")
+for s_ in load_fasta("data/sample.fasta"):
+    print(f"{s_.id:6s} {len(s_):4d} bp   GC {s_.gc_content():.1%}")
+```
+
+</div>
+
+<div id="0a8ff098" class="cell markdown">
+
+------------------------------------------------------------------------
+
+*Part II complete.* You can read real files, write robust validated code with tests, and structure it with classes — the skeleton of a real tool. Part III brings the ecosystem (NumPy, pandas, matplotlib, Biopython) that makes it fast and professional.
+
+</div>
+
+
+:::
+

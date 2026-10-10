@@ -1,0 +1,141 @@
+---
+title: "Part IV — Relationships & Linear Models — Theory"
+---
+
+### PART IV — Relationships & Linear Models · Modules 9–11
+
+*correlation · linear regression · ANOVA*
+
+Read a section, then do the matching exercises in `PartIV_exercises.R` before continuing.
+
+## Where Part IV takes you
+
+This is the conceptual centre of the course. The **linear model** (`lm`) unifies most of classical statistics: regression, t-tests, and ANOVA are all the same machine with different predictors. Learn to fit, check, and interpret `lm()` and you have learned the core of applied biostatistics — and the foundation for the generalised and mixed models in Part V.
+
+**The unifying idea:** a linear model explains a continuous response as a baseline plus the effects of predictors plus random noise: `response = intercept + slope·x + ... + error`. Whether the predictor is continuous (regression), categorical with two levels (t-test), or categorical with several levels (ANOVA), it is one framework — `lm(response ~ predictors)`.
+
+**Time guide.** Module 9 ≈ 4h · Module 10 ≈ 7h · Module 11 ≈ 5h. Total ≈ 16 hours. Datasets: `morphology.csv`, `plant_growth.csv`.
+
+## Module 9 — Correlation
+
+Estimated: 4 hours. Correlation measures how two continuous variables move together — the simplest relationship, and a good warm-up for regression.
+
+### 9.1 Pearson’s correlation
+
+    morph <- read.csv("data/morphology.csv")
+    cor(morph$body_length_mm, morph$wing_length_mm)              # r, the coefficient
+    cor.test(morph$body_length_mm, morph$wing_length_mm)         # r + CI + p-value
+
+**Pearson’s r** ranges from −1 (perfect negative) through 0 (no linear relationship) to +1 (perfect positive). For these beetles r ≈ 0.83 — a strong positive linear relationship: larger bodies have longer wings. `cor.test()` adds a confidence interval and a test of H₀: r = 0.
+
+Always scatterplot first (Part I, 3.3): r measures *linear* association only. A strong curved relationship can have r near 0, and a single outlier can create or destroy a correlation. The number never substitutes for the picture.
+
+### 9.2 Spearman’s rank correlation
+
+When the relationship is monotonic but not linear, or the data are ordinal or have outliers, use **Spearman’s ρ**, which correlates the *ranks*:
+
+    cor(morph$body_length_mm, morph$wing_length_mm, method = "spearman")
+    cor.test(..., method = "spearman")
+
+It answers “do they tend to increase together?” without assuming a straight line.
+
+### 9.3 Correlation is not causation — and r is not slope
+
+Two cautions. First, correlation quantifies association, not cause: a correlation between two traits may both be driven by a third (body size, age, environment). Second, **r is not the slope** — it is unit-free and symmetric (cor(x,y) = cor(y,x)), telling you the *strength* of the linear relationship, not how many mm of wing you get per mm of body. For that — the quantity biologists usually want — you need regression.
+
+> **▶ Practise now — Module 9 → sections 9A–9B in** `PartIV_exercises.R`**.**
+
+## Module 10 — Linear regression
+
+Estimated: 7 hours. The workhorse. Regression models the response as a linear function of one or more predictors, giving interpretable slopes and predictions.
+
+### 10.1 Simple linear regression
+
+    m <- lm(wing_length_mm ~ body_length_mm, data = morph)
+    summary(m)
+
+The `summary()` gives, for each term, an **estimate** (the slope), its standard error, a t-statistic, and a p-value, plus R². For these data the slope is ≈ 0.52: each extra mm of body length corresponds to ≈ 0.52 mm more wing. The **intercept** (≈ 1.66) is the predicted wing length at body length 0 — often not biologically meaningful, just where the line crosses.
+
+### 10.2 Reading the output
+
+-   **Slope estimate** — the effect size: change in response per unit change in predictor. This is the biological headline.
+-   **Std. Error / t / p** — is the slope distinguishable from zero? (A CI via `confint(m)` is better than the p alone.)
+-   **R²** — the fraction of variance in the response explained by the model (≈ 0.70 here: body length explains 70% of wing-length variation). Higher = tighter fit, but a high R² does not validate the model’s assumptions.
+-   **Residual standard error** — typical size of the prediction errors, in response units.
+
+```{=html}
+<!-- -->
+```
+    confint(m)                       # 95% CIs for intercept and slope
+    predict(m, newdata = data.frame(body_length_mm = 13))   # predicted wing at 13 mm
+
+### 10.3 Checking assumptions: residual diagnostics
+
+A linear model assumes the residuals (observed − predicted) are independent, have constant variance, and are approximately normal, and that the relationship is linear. Check by **plotting the model**:
+
+    par(mfrow = c(2, 2)); plot(m); par(mfrow = c(1, 1))
+
+The four panels: **Residuals vs Fitted** (look for curvature = non-linearity, or a funnel = non-constant variance); **Q–Q** (residual normality); **Scale–Location** (variance trend); **Residuals vs Leverage** (influential outliers). You fit a model, then you *check* it here — never report an `lm` you haven’t looked at these plots for. Common fixes: a curved pattern → add a quadratic term or transform; a funnel → log-transform the response or move to a GLM (Part V).
+
+### 10.4 Multiple regression
+
+Add predictors with `+`. Each slope is then the effect of that predictor **holding the others constant**:
+
+    m2 <- lm(mass_mg ~ body_length_mm + sex, data = morph)
+    summary(m2)
+
+Here the `body_length_mm` coefficient is the effect of length on mass *at a fixed sex*, and the `sex` coefficient is the mass difference between sexes *at a fixed body length* — “adjusting for” the other. This is how you separate tangled influences, and why multiple regression is central to observational biology. Beware **collinearity** (strongly correlated predictors), which inflates standard errors and makes individual slopes unstable; check with `cor()` among predictors or the variance inflation factor (`car::vif`).
+
+### 10.5 Categorical predictors and interactions
+
+A factor predictor enters as **dummy variables**: `lm(mass_mg ~ sex)` estimates the mean difference between sexes (identical to the two-sample t-test — the unification in action). An **interaction** (`a * b` = `a + b + a:b`) lets one predictor’s effect depend on another — e.g. whether the body–mass slope differs by sex. Interactions are where much interesting biology lives; test them deliberately, and plot them to interpret.
+
+> **▶ Practise now — Module 10 → sections 10A–10C in** `PartIV_exercises.R`**.**
+
+## Module 11 — ANOVA
+
+Estimated: 5 hours. ANOVA (Analysis of Variance) compares means across **three or more** groups — and is simply a linear model with categorical predictors, read through an F-test.
+
+### 11.1 Why not many t-tests?
+
+Comparing 4 groups pairwise is 6 t-tests, each with a 5% false-positive rate — so the chance of at least one false positive climbs well above 5%. ANOVA asks one overall question first — “do any of the group means differ?” — controlling the error rate, before you look at specific pairs.
+
+### 11.2 One-way ANOVA
+
+    plant <- read.csv("data/plant_growth.csv")
+    m <- aov(height_cm ~ treatment, data = plant)
+    summary(m)
+
+The F-test asks whether between-group variance exceeds within-group variance more than chance allows. A small p means at least one treatment mean differs. Equivalently — and preferably — fit it as a linear model and use `anova()`:
+
+    m <- lm(height_cm ~ treatment, data = plant)
+    anova(m)        # the ANOVA table; same F and p
+
+For these plants treatment is highly significant (F ≈ 66, p \< 0.001): fertiliser level strongly affects height (means ≈ 19.3 control, 22.4 low, 26.9 high).
+
+### 11.3 Post-hoc tests: which groups differ?
+
+A significant ANOVA says “some means differ,” not *which*. Follow up with **Tukey’s HSD**, which compares all pairs while controlling the family-wise error rate:
+
+    TukeyHSD(aov(height_cm ~ treatment, data = plant))
+
+Each row gives a pairwise mean difference, its CI, and an adjusted p-value. This is the right way to do pairwise comparisons after ANOVA — not raw t-tests.
+
+### 11.4 Two-way ANOVA and interactions
+
+With two factors, you can test each main effect and their interaction:
+
+    m <- lm(height_cm ~ treatment * genotype, data = plant)
+    anova(m)
+
+-   **Main effects** — does height depend on treatment? on genotype?
+-   **Interaction** (`treatment:genotype`) — does the treatment effect *differ* between genotypes?
+
+For these data treatment (F ≈ 66, p \< 0.001) and genotype (F ≈ 6.6, p ≈ 0.012) both matter, while the interaction is not significant (F ≈ 2.1, p ≈ 0.13) — the fertiliser effect is similar in both genotypes. Always interpret the interaction first: if it is significant, the main effects alone can mislead, and an interaction plot (`interaction.plot`, or `ggplot` with group lines) is the way to see what’s happening.
+
+### 11.5 Assumptions and the thread to Part V
+
+ANOVA shares the linear-model assumptions: independent observations, normal residuals, roughly equal group variances. Check the same residual plots (`plot(m)`). When the response is a count or a proportion, or when observations are grouped/repeated (pseudoreplication!), the ordinary linear model is the wrong tool — and that is exactly what Part V addresses with **generalised** linear models (for non-normal responses) and **mixed** models (for grouped data).
+
+> **▶ Practise now — Module 11 → the Part IV capstone in** `PartIV_exercises.R`**.**
+

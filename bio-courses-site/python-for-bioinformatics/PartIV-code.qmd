@@ -1,0 +1,672 @@
+---
+title: "Part IV — Your Own Tools & Pipelines — Exercises"
+---
+
+Download the notebooks: [exercises](../downloads/python/py_PartIV_exercises.ipynb) · [solutions](../downloads/python/py_PartIV_solutions.ipynb). Example data is in [downloads/python/data](../downloads/python/data).
+
+::: {.panel-tabset}
+
+## Exercises
+
+<div class="cell markdown">
+
+# Python for Bioinformatics — Part IV Exercises
+
+## Modules 13–18 · Your Own Tools & Pipelines
+
+Work through this notebook **alongside the theory document**, in order. Each section opens with a worked example to run and study, then exercises (*easy* → *harder* → *challenge*).
+
+Some of Part IV happens at the **command line** and in **files**, not inside a notebook. Those exercises ask you to write file contents or commands as text — the solutions show the full version. A few modules need extra tools (`pysam`, `snakemake`, `git`); where a cell can't run without them, it's marked.
+
+</div>
+
+<div class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 13 — Reproducible environments & version control
+
+</div>
+
+<div class="cell markdown">
+
+### Worked example — inspect your environment (run it)
+
+</div>
+
+<div class="cell code">
+
+``` python
+import sys
+print(sys.version)
+# At a terminal:  conda env export --from-history > environment.yml
+```
+
+</div>
+
+<div class="cell markdown">
+
+### 13A.1 (easy)
+
+Write, as a string, the contents of an `environment.yml` for a project needing Python 3.11, `biopython`, and `pysam` from `bioconda` + `conda-forge`.
+
+</div>
+
+<div class="cell code">
+
+``` python
+environment_yml = '''
+# your YAML here
+'''
+print(environment_yml)
+```
+
+</div>
+
+<div class="cell markdown">
+
+### 13A.2 (concept)
+
+Why commit `environment.yml`, and what does `--from-history` give you over a plain export?
+
+</div>
+
+<div class="cell code">
+
+``` python
+# your answer here
+```
+
+</div>
+
+<div class="cell markdown">
+
+### 13B.1 (harder)
+
+Write the git commands to start tracking a folder, commit `analysis.py`, and push to a new GitHub repo `mytool`. List three `.gitignore` entries for a Python bioinformatics project.
+
+</div>
+
+<div class="cell code">
+
+``` python
+# your commands here (as comments)
+```
+
+</div>
+
+<div class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 14 — Command-line tools
+
+</div>
+
+<div class="cell markdown">
+
+### Worked example — a CLI parsed in-notebook (run it)
+
+</div>
+
+<div class="cell code">
+
+``` python
+import argparse
+
+def build_parser():
+    p = argparse.ArgumentParser(description="Report GC content per sequence.")
+    p.add_argument("fasta", help="input FASTA file")
+    p.add_argument("--min-gc", type=float, default=0.0, help="GC threshold")
+    return p
+
+args = build_parser().parse_args(["sample.fasta", "--min-gc", "0.4"])
+print(args.fasta, args.min_gc, type(args.min_gc))
+```
+
+</div>
+
+<div class="cell markdown">
+
+### 14A.1 (easy)
+
+Extend `build_parser()` with an optional `-o/--output` (default `None`). Parse `["x.fasta", "-o", "out.txt"]` and print all three values.
+
+</div>
+
+<div class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div class="cell markdown">
+
+### 14A.2 (harder)
+
+Assemble a complete `gc_tool.py` (as a string): define `gc_content(seq)`, parse a `fasta` arg and `--min-gc`, print ids with GC \>= threshold, include the `__main__` guard.
+
+</div>
+
+<div class="cell code">
+
+``` python
+gc_tool_py = '''
+# your script here
+'''
+print(gc_tool_py)
+```
+
+</div>
+
+<div class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 15 — Packaging your own tool
+
+</div>
+
+<div class="cell markdown">
+
+### 15A.1 (harder)
+
+Write a `pyproject.toml` for package `seqtools` (v0.1.0, needs `biopython>=1.80`, Python \>=3.10) that installs a `seq-gc` command pointing at `seqtools.cli:main`, using hatchling.
+
+</div>
+
+<div class="cell code">
+
+``` python
+pyproject_toml = '''
+# your TOML here
+'''
+print(pyproject_toml)
+```
+
+</div>
+
+<div class="cell markdown">
+
+### 15B.1 (concept)
+
+Draw the `src/`-layout tree (as a comment), give the commands to install editable and run tests, and say why `pip install -e .` is right during development.
+
+</div>
+
+<div class="cell code">
+
+``` python
+# your tree + commands + answer here
+```
+
+</div>
+
+<div class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 16 — Wrapping external tools with subprocess
+
+</div>
+
+<div class="cell markdown">
+
+### Worked example — run a command, capture output (run it)
+
+</div>
+
+<div class="cell code">
+
+``` python
+import subprocess
+r = subprocess.run(["echo", "hello", "pipeline"], capture_output=True, text=True, check=True)
+print(repr(r.stdout), "exit", r.returncode)
+```
+
+</div>
+
+<div class="cell markdown">
+
+### 16A.1 (easy)
+
+Call `python --version` via subprocess (as a list), capture, and print it.
+
+</div>
+
+<div class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div class="cell markdown">
+
+### 16A.2 (harder)
+
+Write `run_step(cmd)` that runs a command with `check=True`, and on failure catches `CalledProcessError`, prints a clear message to stderr, and re-raises. Test on `["ls", "no_such_dir_xyz"]`.
+
+</div>
+
+<div class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 17 — Real formats & APIs
+
+</div>
+
+<div class="cell markdown">
+
+### 17A.1 (concept + code)
+
+Write code to open BAM `aln.bam`, iterate reads over `chr1:1000-2000`, and print name/start/mapping-quality. What index file must exist for region `fetch()`?
+
+</div>
+
+<div class="cell code">
+
+``` python
+# your code here (+ comment answer about the index)
+```
+
+</div>
+
+<div class="cell markdown">
+
+### 17A.2 (harder)
+
+Write `Bio.Entrez` + `SeqIO` code to fetch `NC_000962.3` (M. tuberculosis H37Rv) as FASTA and print id + length. Note the line NCBI requires first.
+
+</div>
+
+<div class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Part IV capstone — a mini reproducible pipeline
+
+</div>
+
+<div class="cell markdown">
+
+Write the pieces of a Snakemake pipeline that, for each sample in `["rpoB", "katG", "gyrA"]`: (1) `rule gc_report` runs your `seq-gc` tool on `data/{sample}.fasta` -\> `results/{sample}.gc.txt`; (2) `rule combine` concatenates them into `results/report.txt`; (3) `rule all` targets the report. Give the run command and the dry-run command, and say why this beats one subprocess script.
+
+</div>
+
+<div class="cell code">
+
+``` python
+snakefile = '''
+# your Snakefile here
+'''
+print(snakefile)
+```
+
+</div>
+
+
+## Solutions
+
+<div class="cell markdown">
+
+# Python for Bioinformatics — Part IV Solutions
+
+## Modules 13–18 · Your Own Tools & Pipelines
+
+Reference solutions with commentary.
+
+</div>
+
+<div class="cell markdown">
+
+## Module 13
+
+</div>
+
+<div class="cell markdown">
+
+**13A.1**
+
+</div>
+
+<div class="cell code">
+
+``` python
+environment_yml = '''
+name: biopy
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - biopython
+  - pysam
+'''
+print(environment_yml)
+```
+
+</div>
+
+<div class="cell markdown">
+
+**13A.2**
+
+</div>
+
+<div class="cell code">
+
+``` python
+# Committing environment.yml lets anyone recreate the exact package set with
+# `conda env create -f environment.yml` (reproducible). `--from-history` records
+# only the packages you explicitly installed - portable across OSes - rather than
+# every transitive dependency pinned to your exact build.
+```
+
+</div>
+
+<div class="cell markdown">
+
+**13B.1**
+
+</div>
+
+<div class="cell code">
+
+``` python
+# git init
+# git add analysis.py
+# git commit -m "Add GC-content analysis script"
+# git remote add origin https://github.com/USERNAME/mytool.git
+# git branch -M main
+# git push -u origin main
+#
+# .gitignore:  __pycache__/   .ipynb_checkpoints/   data/
+```
+
+</div>
+
+<div class="cell markdown">
+
+## Module 14
+
+</div>
+
+<div class="cell markdown">
+
+**14A.1**
+
+</div>
+
+<div class="cell code">
+
+``` python
+import argparse
+def build_parser():
+    p = argparse.ArgumentParser(description="Report GC content per sequence.")
+    p.add_argument("fasta")
+    p.add_argument("--min-gc", type=float, default=0.0)
+    p.add_argument("-o", "--output", default=None, help="output file (default stdout)")
+    return p
+args = build_parser().parse_args(["x.fasta", "-o", "out.txt"])
+print(args.fasta, args.min_gc, args.output)
+```
+
+</div>
+
+<div class="cell markdown">
+
+**14A.2**
+
+</div>
+
+<div class="cell code">
+
+``` python
+gc_tool_py = r"""
+import argparse, sys
+from Bio import SeqIO
+
+def gc_content(seq):
+    seq = str(seq).upper()
+    return (seq.count("G") + seq.count("C")) / len(seq)
+
+def main():
+    p = argparse.ArgumentParser(description="Print ids with GC >= threshold.")
+    p.add_argument("fasta")
+    p.add_argument("--min-gc", type=float, default=0.0)
+    p.add_argument("-o", "--output", default=None)
+    args = p.parse_args()
+    out = open(args.output, "w") if args.output else sys.stdout
+    for rec in SeqIO.parse(args.fasta, "fasta"):
+        gc = gc_content(rec.seq)
+        if gc >= args.min_gc:
+            print(rec.id, round(gc, 3), sep="\t", file=out)
+
+if __name__ == "__main__":
+    main()
+"""
+print(gc_tool_py)
+```
+
+</div>
+
+<div class="cell markdown">
+
+## Module 15
+
+</div>
+
+<div class="cell markdown">
+
+**15A.1**
+
+</div>
+
+<div class="cell code">
+
+``` python
+pyproject_toml = r"""
+[project]
+name = "seqtools"
+version = "0.1.0"
+description = "Small sequence utilities for bioinformatics"
+requires-python = ">=3.10"
+dependencies = ["biopython>=1.80"]
+
+[project.scripts]
+seq-gc = "seqtools.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+"""
+print(pyproject_toml)
+```
+
+</div>
+
+<div class="cell markdown">
+
+**15B.1**
+
+</div>
+
+<div class="cell code">
+
+``` python
+# seqtools/
+#  |- pyproject.toml, README.md, LICENSE
+#  |- src/seqtools/__init__.py, sequence.py, cli.py
+#  |- tests/test_sequence.py
+#
+# (a) pip install -e .      (b) pytest
+# Editable install links to your source, so edits take effect immediately
+# without reinstalling - the fast develop/test loop.
+```
+
+</div>
+
+<div class="cell markdown">
+
+## Module 16
+
+</div>
+
+<div class="cell markdown">
+
+**16A.1**
+
+</div>
+
+<div class="cell code">
+
+``` python
+import subprocess
+r = subprocess.run(["python", "--version"], capture_output=True, text=True)
+print((r.stdout + r.stderr).strip())
+```
+
+</div>
+
+<div class="cell markdown">
+
+**16A.2**
+
+</div>
+
+<div class="cell code">
+
+``` python
+import subprocess, sys
+def run_step(cmd):
+    try:
+        return subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"command failed (exit {e.returncode}): {' '.join(cmd)}", file=sys.stderr)
+        raise
+try:
+    run_step(["ls", "no_such_dir_xyz"])
+except subprocess.CalledProcessError:
+    print("caught the failure as expected")
+```
+
+</div>
+
+<div class="cell markdown">
+
+## Module 17
+
+</div>
+
+<div class="cell markdown">
+
+**17A.1** — needs pysam + an indexed BAM
+
+</div>
+
+<div class="cell code">
+
+``` python
+code_bam = r"""
+import pysam
+bam = pysam.AlignmentFile("aln.bam", "rb")
+for read in bam.fetch("chr1", 1000, 2000):
+    print(read.query_name, read.reference_start, read.mapping_quality)
+bam.close()
+"""
+print(code_bam)
+# Region fetch() needs a BAM index aln.bam.bai  (make it: samtools index aln.bam)
+```
+
+</div>
+
+<div class="cell markdown">
+
+**17A.2**
+
+</div>
+
+<div class="cell code">
+
+``` python
+code_entrez = r"""
+from Bio import Entrez, SeqIO
+Entrez.email = "you@example.com"   # REQUIRED by NCBI
+handle = Entrez.efetch(db="nucleotide", id="NC_000962.3", rettype="fasta", retmode="text")
+record = SeqIO.read(handle, "fasta")
+handle.close()
+print(record.id, len(record.seq))
+"""
+print(code_entrez)
+# You must set Entrez.email before any NCBI request.
+```
+
+</div>
+
+<div class="cell markdown">
+
+## Part IV capstone
+
+</div>
+
+<div class="cell code">
+
+``` python
+snakefile = r"""
+SAMPLES = ["rpoB", "katG", "gyrA"]
+
+rule all:
+    input: "results/report.txt"
+
+rule gc_report:
+    input:  "data/{sample}.fasta"
+    output: "results/{sample}.gc.txt"
+    shell:  "seq-gc {input} > {output}"
+
+rule combine:
+    input:  expand("results/{s}.gc.txt", s=SAMPLES)
+    output: "results/report.txt"
+    shell:  "cat {input} > {output}"
+"""
+print(snakefile)
+# Run:      snakemake --cores 4
+# Dry run:  snakemake --dry-run
+# Better than one subprocess script: Snakemake tracks file dependencies and
+# reruns only affected steps (incremental), parallelises samples, declares the
+# whole workflow in one versioned file (reproducible), and scales laptop->HPC.
+```
+
+</div>
+
+<div class="cell markdown">
+
+------------------------------------------------------------------------
+
+*You've finished the course* — from first principles to writing, packaging, and shipping your own reproducible tools and pipelines.
+
+</div>
+
+
+:::
+

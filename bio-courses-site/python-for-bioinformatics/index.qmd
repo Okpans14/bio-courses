@@ -1,0 +1,31 @@
+---
+title: "Python for Bioinformatics"
+subtitle: "From first principles to writing your own tools"
+---
+
+A hands-on course that takes you from basic Python to building packaged, command-line, version-controlled bioinformatics tools and reproducible pipelines. Every example uses a real pathogen-genomics theme.
+
+## The four parts
+
+| Part | Focus |
+|---|---|
+| [I — Foundations](PartI-theory.qmd) | setup, syntax, strings & sequences, control flow, data structures, functions |
+| [II — Real Programming](PartII-theory.qmd) | files (FASTA/FASTQ/CSV), errors/debugging/testing, object-oriented programming |
+| [III — The Ecosystem](PartIII-theory.qmd) | NumPy, pandas, matplotlib/seaborn, Biopython |
+| [IV — Your Own Tools & Pipelines](PartIV-theory.qmd) | environments & git, CLI tools, packaging, subprocess, pysam/VCF/Entrez, Snakemake |
+
+Each part has **theory** and a **code** page with the exercises and solutions (downloadable Jupyter notebooks).
+
+## Setup
+
+```bash
+# create the course environment (conda recommended)
+conda create -n biopy python=3.11
+conda activate biopy
+conda install -c conda-forge -c bioconda numpy pandas matplotlib seaborn biopython jupyterlab
+# Part IV adds:
+conda install -c bioconda pysam snakemake
+pip install cyvcf2
+```
+
+Example data is in [downloads/python/data](../downloads/python/data).

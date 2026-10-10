@@ -1,0 +1,859 @@
+---
+title: "Part I — Foundations — Theory"
+---
+
+**Python for Bioinformatics**
+
+*From first principles to writing your own tools*
+
+**PART I — Foundations**
+
+Modules 1–5
+
+For learners coming from R and MATLAB
+
+*Read a section, then do the matching exercises in the notebook before continuing.*
+
+# Contents
+
+[Contents [1](#contents)](#contents)
+
+[How to use Part I [1](#how-to-use-part-i)](#how-to-use-part-i)
+
+[Chapter 0 — Your environment (do this first) [1](#chapter-0-your-environment-do-this-first)](#chapter-0-your-environment-do-this-first)
+
+[0.1 The mental model: engine, cockpit, sandbox [1](#the-mental-model-engine-cockpit-sandbox)](#the-mental-model-engine-cockpit-sandbox)
+
+[0.2 Create the course environment [1](#create-the-course-environment)](#create-the-course-environment)
+
+[0.3 Wire VS Code to the environment [1](#wire-vs-code-to-the-environment)](#wire-vs-code-to-the-environment)
+
+[0.4 Three ways to run Python [1](#three-ways-to-run-python)](#three-ways-to-run-python)
+
+[0.5 A sanity check [1](#a-sanity-check)](#a-sanity-check)
+
+[Module 1 — Setup, syntax & the Python mindset [1](#module-1-setup-syntax-the-python-mindset)](#module-1-setup-syntax-the-python-mindset)
+
+[1.1 Indentation is grammar, not style [1](#indentation-is-grammar-not-style)](#indentation-is-grammar-not-style)
+
+[1.2 Variables, assignment, dynamic typing [1](#variables-assignment-dynamic-typing)](#variables-assignment-dynamic-typing)
+
+[1.3 The core value types [1](#the-core-value-types)](#the-core-value-types)
+
+[Numbers and the operators that bite [1](#numbers-and-the-operators-that-bite)](#numbers-and-the-operators-that-bite)
+
+[Strings, booleans, None [1](#strings-booleans-none)](#strings-booleans-none)
+
+[Type conversion [1](#type-conversion)](#type-conversion)
+
+[1.4 Output and f-strings [1](#output-and-f-strings)](#output-and-f-strings)
+
+[1.5 R → Python quick reference [1](#r-python-quick-reference)](#r-python-quick-reference)
+
+[Module 2 — Strings & sequences [1](#module-2-strings-sequences)](#module-2-strings-sequences)
+
+[2.1 Slicing: the operation you'll use most [1](#slicing-the-operation-youll-use-most)](#slicing-the-operation-youll-use-most)
+
+[2.2 Strings are immutable [1](#strings-are-immutable)](#strings-are-immutable)
+
+[2.3 Methods: the string toolbox [1](#methods-the-string-toolbox)](#methods-the-string-toolbox)
+
+[2.4 The reverse complement [1](#the-reverse-complement)](#the-reverse-complement)
+
+[2.5 Looking ahead [1](#looking-ahead)](#looking-ahead)
+
+[Module 3 — Control flow: if / for / while [1](#module-3-control-flow-if-for-while)](#module-3-control-flow-if-for-while)
+
+[3.1 Conditionals: if / elif / else [1](#conditionals-if-elif-else)](#conditionals-if-elif-else)
+
+[3.2 Truthiness [1](#truthiness)](#truthiness)
+
+[3.3 The for loop iterates over things, not indices [1](#the-for-loop-iterates-over-things-not-indices)](#the-for-loop-iterates-over-things-not-indices)
+
+[3.4 while loops, break, continue [1](#while-loops-break-continue)](#while-loops-break-continue)
+
+[Module 4 — Data structures: lists, tuples, dicts, sets [1](#module-4-data-structures-lists-tuples-dicts-sets)](#module-4-data-structures-lists-tuples-dicts-sets)
+
+[4.1 Lists — ordered, mutable, your default [1](#lists-ordered-mutable-your-default)](#lists-ordered-mutable-your-default)
+
+[4.2 Tuples — ordered, immutable [1](#tuples-ordered-immutable)](#tuples-ordered-immutable)
+
+[4.3 Dictionaries — key → value lookups [1](#dictionaries-key-value-lookups)](#dictionaries-key-value-lookups)
+
+[4.4 Sets — unique, unordered membership [1](#sets-unique-unordered-membership)](#sets-unique-unordered-membership)
+
+[4.5 Choosing the right structure [1](#choosing-the-right-structure)](#choosing-the-right-structure)
+
+[Module 5 — Functions, scope & modules [1](#module-5-functions-scope-modules)](#module-5-functions-scope-modules)
+
+[5.1 Defining and calling functions [1](#defining-and-calling-functions)](#defining-and-calling-functions)
+
+[5.2 Arguments: positional, keyword, default [1](#arguments-positional-keyword-default)](#arguments-positional-keyword-default)
+
+[5.3 Returning multiple values [1](#returning-multiple-values)](#returning-multiple-values)
+
+[5.4 Scope: local vs global [1](#scope-local-vs-global)](#scope-local-vs-global)
+
+[5.5 Modules: splitting code across files [1](#modules-splitting-code-across-files)](#modules-splitting-code-across-files)
+
+[5.6 Where Part I leaves you [1](#where-part-i-leaves-you)](#where-part-i-leaves-you)
+
+# How to use Part I
+
+This is the foundations half of the course: five modules that take you from "I can't write basic Python" to "I can write structured programs with functions, files of my own modules, and the right data structure for the job." You already program in R and MATLAB, so this is not about teaching concepts you know — it is about Python's way of expressing them, and the specific places where Python differs.
+
+The course comes in three files per part: this **theory document**, an **exercises notebook** (.ipynb), and a **solutions notebook**. The theory is deliberately broken into short sections. After most sections you will see a green **▶ Practise now** box telling you exactly which exercises to do before reading on. **Do them in that order.** Alternating small theory with immediate practice is how programming sticks; reading five modules and then opening the notebook is the slow way to learn.
+
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Time guide**                                                                                                                                                                                                |
+|                                                                                                                                                                                                               |
+| Module 1 ≈ 4h · Module 2 ≈ 6h · Module 3 ≈ 5h · Module 4 ≈ 8h · Module 5 ≈ 7h. Total for Part I ≈ 30 hours including exercises. There is no prize for rushing — the exercises are where the learning happens. |
++===============================================================================================================================================================================================================+
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+# Chapter 0 — Your environment (do this first)
+
+A wobbly setup is where most people stall before they have written a line of real code. We will spend real care here so that everything afterwards just works — online or offline. You already have Anaconda and VS Code, which is exactly the right combination. By the end of this chapter you will have an isolated environment for the whole course and an editor wired to it.
+
+## 0.1 The mental model: engine, cockpit, sandbox
+
+-   **Anaconda** is the engine. It ships Python plus conda, a manager for packages and environments.
+
+-   **VS Code** is the cockpit. It is where you write scripts, run notebooks, debug, and (in Part II) use Git and push to GitHub.
+
+-   **A conda environment** is a sandbox: an isolated Python with its own set of packages, so this course's tools never collide with anything else on your machine.
+
+In R you install packages into one global library and rarely think about versions. Python projects deliberately do the opposite: each project gets its own environment. This is the single most valuable habit to adopt early — it is the programming equivalent of keeping your reagents separated per experiment.
+
+## 0.2 Create the course environment
+
+Open the **Anaconda Prompt** on Windows (search for it in the Start menu) or a terminal on macOS/Linux, and run these lines one at a time:
+
+> conda create -n biopy python=3.12
+>
+> conda activate biopy
+>
+> conda install -c conda-forge numpy pandas matplotlib biopython jupyter ipykernel
+
+Line by line:
+
+1.  conda create -n biopy python=3.12 builds a fresh environment named biopy containing Python 3.12 and nothing else.
+
+2.  conda activate biopy switches you into it. You must do this every time you open a new terminal; your prompt will then show (biopy) at the start of the line. That prefix is how you know which environment is active.
+
+3.  conda install -c conda-forge ... installs the packages used across the whole course from the trusted conda-forge channel. We install them now so that later modules — and your offline days — need no internet.
+
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Why pin Python 3.12?**                                                                                                                                                                                                                                       |
+|                                                                                                                                                                                                                                                                |
+| Pinning a specific version makes your environment reproducible: anyone (including future-you) can recreate it and get the same behaviour. This is the same reasoning behind recording exact reagent lot numbers. 3.12 is stable and current as of this course. |
++================================================================================================================================================================================================================================================================+
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 0.3 Wire VS Code to the environment
+
+4.  Open VS Code. In the Extensions panel (the squares icon, or Ctrl+Shift+X), install **Python** and **Jupyter**, both published by Microsoft.
+
+5.  Open the Command Palette with Ctrl+Shift+P, type Python: Select Interpreter, and pick the entry that mentions biopy. If it does not appear, restart VS Code after creating the environment.
+
+6.  Create a folder for the course (e.g. python-bioinformatics) and open it in VS Code via File → Open Folder. Put the exercise notebooks inside it.
+
+7.  Open any .ipynb notebook. Top-right you will see a kernel picker — choose the biopy kernel. Now every cell runs inside your sandbox.
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Which app do I actually open day to day?**                                                                                                                                                                                |
+|                                                                                                                                                                                                                             |
+| Almost always just **VS Code**. You only return to the Anaconda Prompt to manage environments or install a new package with conda install. You will rarely, if ever, open Anaconda Navigator or the standalone Jupyter app. |
++=============================================================================================================================================================================================================================+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 0.4 Three ways to run Python
+
+You will use all three during this course, each for a different purpose:
+
+  -----------------------------------------------------------------------------------------------------------------------------------------------
+  **Tool**                **What it is**                                   **Best for**
+  ----------------------- ------------------------------------------------ ----------------------------------------------------------------------
+  REPL                    Interactive prompt. Type python in a terminal.   Quick one-liners, testing a snippet — like the R console.
+
+  Script (.py)            A saved program run top to bottom.               Real tools; anything that goes on GitHub.
+
+  Notebook (.ipynb)       Cells of code and text run piece by piece.       Learning and exploration — like R Markdown. The exercises live here.
+  -----------------------------------------------------------------------------------------------------------------------------------------------
+
+## 0.5 A sanity check
+
+Make a file check.py in your course folder with the line below, then run it (the ▷ button, top-right in VS Code):
+
+> import sys, Bio
+>
+> print("Python:", sys.version.split()\[0\])
+>
+> print("Biopython:", Bio.\_\_version\_\_)
+>
+> print("Environment is ready.")
+
+If it prints three lines without error, your engine, cockpit, and sandbox are all connected. If import Bio fails, your interpreter is probably not set to biopy — repeat step 0.3.2.
+
+  ---------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** open the exercises notebook and run Exercise 0 to confirm your setup, then return here for Module 1.
+  ---------------------------------------------------------------------------------------------------------------------------
+
+  ---------------------------------------------------------------------------------------------------------------------------
+
+# Module 1 — Setup, syntax & the Python mindset
+
+You know what variables, types, and printing are. This module is about how Python expresses them, and the handful of differences from R/MATLAB that cause most early bugs. Estimated: 4 hours.
+
+## 1.1 Indentation is grammar, not style
+
+Python marks blocks with indentation, where R and MATLAB use braces or end. A colon opens a block; the indented lines beneath form it.
+
+> \# R \# Python
+>
+> \# if (gc \> 0.6) { if gc \> 0.6:
+>
+> \# print("GC-rich") print("GC-rich")
+>
+> \# }
+
+Use **four spaces** per level (VS Code inserts them when you press Tab). Inconsistent indentation raises an IndentationError. This feels strict for about a day, then you realise it forces every Python program into the clean layout that well-formatted R only achieves by discipline.
+
+## 1.2 Variables, assignment, dynamic typing
+
+Assign with = (not \<-). No type declarations; a name can be rebound to another type later.
+
+> organism = "Salmonella Paratyphi B" \# str
+>
+> genome_size = 4857432 \# int (base pairs)
+>
+> gc_content = 0.52 \# float
+>
+> is_pathogen = True \# bool
+>
+> print(type(gc_content)) \# \<class 'float'\>
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Names point to objects**                                                                                                                                                                                                                                |
+|                                                                                                                                                                                                                                                           |
+| A Python variable is a **name bound to an object**, not a box holding a value. After b = a, both names refer to the same object. Harmless for numbers and strings (they can't change in place), but it matters for lists in Module 4. Tuck this away now. |
++===========================================================================================================================================================================================================================================================+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 1.3 The core value types
+
+### Numbers and the operators that bite
+
+  -----------------------------------------------------------------------------
+  **Operator**      **Meaning**             **Example**       **Result**
+  ----------------- ----------------------- ----------------- -----------------
+  /                 true division (float)   7 / 2             3.5
+
+  //                floor division          7 // 2            3
+
+  \%                modulo / remainder      7 % 3             1
+
+  \*\*              exponent                2 \*\* 10         1024
+  -----------------------------------------------------------------------------
+
+Two traps for R/MATLAB users: the power operator is \*\*, not \^ (in Python \^ is bitwise XOR); and / always returns a float. The % operator is quietly central to bioinformatics — codons are triplets, so len(seq) % 3 == 0 tests for a whole number of codons.
+
+### Strings, booleans, None
+
+A DNA sequence is, at heart, a string. Single or double quotes, no separate character type.
+
+> dna = "ATGCGTACGTTAG"
+>
+> print(len(dna)) \# 13 (like nchar in R)
+>
+> print(dna\[0\]) \# 'A' (indexing from 0!)
+>
+> print(dna.upper()) \# method call via dot syntax
+
+Booleans are True/False (capitalised). None means "no value", roughly R's NULL; it is not 0 or "".
+
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **The biggest gotcha: 0-based indexing**                                                                                                                                                                                                                                                     |
+|                                                                                                                                                                                                                                                                                              |
+| R and MATLAB count from 1; Python counts from **0**. The first base is dna\[0\], the last is dna\[-1\]. Every convert trips on this for a week, then never again. We drill it in Module 2, because off-by-one errors in genomic coordinates are not just bugs — they are biologically wrong. |
++==============================================================================================================================================================================================================================================================================================+
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+### Type conversion
+
+Data read from files arrives as strings; convert before doing maths. Conversion functions are named after the target type.
+
+> count = int("42") \# 42
+>
+> ratio = float("0.61") \# 0.61
+>
+> label = str(4857432) \# "4857432"
+>
+> print(count + 8) \# 50
+>
+> \# "42" + 8 -\> TypeError (Python won't silently coerce)
+
+## 1.4 Output and f-strings
+
+Build output with **f-strings**: an f before the quotes, variables inside { }.
+
+> gc = 0.523456
+>
+> gene = "rpoB"
+>
+> print(f"Gene {gene} has GC {gc:.2%}") \# Gene rpoB has GC 52.35%
+>
+> print(f"Padded: {gc:.3f}") \# Padded: 0.523
+
+The part after the colon is a format spec: .2% = percentage with two decimals, .3f = three decimal places, , = thousands separator. This replaces R's sprintf and paste0 with one readable construct.
+
+## 1.5 R → Python quick reference
+
+  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **Concept**                                                                                                                                                                                             **R**                   **Python**
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ----------------------- -----------------------
+  Assign                                                                                                                                                                                                  x \<- 5                 x = 5
+
+  Print                                                                                                                                                                                                   print(x)                print(x)
+
+  Length                                                                                                                                                                                                  nchar(s)                len(s)
+
+  Type                                                                                                                                                                                                    class(x)                type(x)
+
+  Power                                                                                                                                                                                                   2 \^ 10                 2 \*\* 10
+
+  Int division                                                                                                                                                                                            7 %/% 2                 7 // 2
+
+  Modulo                                                                                                                                                                                                  7 %% 3                  7 % 3
+
+  First element                                                                                                                                                                                           s\[1\]                  s\[0\]
+
+  True / null                                                                                                                                                                                             TRUE / NULL             True / None
+
+  Format                                                                                                                                                                                                  sprintf("%.2f", x)      f"{x:.2f}"
+
+  **▶ Practise now —** do Module 1 exercises (sections 1A–1D) in the notebook now. They cover f-strings, type conversion, modulo with codons, and 0-based indexing. Finish all of them before Module 2.                           
+  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Module 2 — Strings & sequences
+
+Sequences are strings, so string handling is the core motor skill of bioinformatics programming. This module turns Module 1's basics into real operations: slicing ranges, reversing, complementing, transcribing, counting, and searching. Estimated: 6 hours. We will alternate tightly between theory and the notebook here.
+
+## 2.1 Slicing: the operation you'll use most
+
+Slicing extracts a substring with seq\[start:stop\]. The crucial rule: **start is included, stop is excluded** ("half-open"). This pairs naturally with 0-based indexing.
+
+> dna = "ATGCGTACGTTAG"
+>
+> \# 0123456789...
+>
+> print(dna\[0:3\]) \# 'ATG' -\> positions 0,1,2 (the start codon)
+>
+> print(dna\[3:6\]) \# 'CGT'
+>
+> print(dna\[:3\]) \# 'ATG' -\> omit start = from 0
+>
+> print(dna\[3:\]) \# 'CGTACGTTAG' -\> omit stop = to end
+>
+> print(dna\[-3:\]) \# 'TAG' -\> last three bases (a stop codon)
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Why half-open slicing is a gift**                                                                                                                                                                                                                                                                                                                                   |
+|                                                                                                                                                                                                                                                                                                                                                                       |
+| Because stop is excluded, seq\[a:b\] has length exactly b - a, and seq\[:k\] + seq\[k:\] reconstructs the whole sequence with no overlap or gap. This is exactly the convention used by BED files and most genomic coordinate systems, so Python's slicing maps directly onto how the field stores intervals. R's inclusive 1-based indexing is the odd one out here. |
++=======================================================================================================================================================================================================================================================================================================================================================================+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+A third slice value is the **step**: seq\[::2\] takes every second base, and seq\[::-1\] reverses the string — we'll use that for reverse complements.
+
+  -------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 2 → 2A (slicing) now: extracting codons, UTRs, and the last codon. Then come back.
+  -------------------------------------------------------------------------------------------------------------------
+
+  -------------------------------------------------------------------------------------------------------------------
+
+## 2.2 Strings are immutable
+
+You cannot change a string in place: dna\[0\] = 'C' raises an error. Instead you build a new string. This is different from MATLAB arrays. To "edit" a sequence you slice and concatenate, or convert to a list (Module 4).
+
+> dna = "ATGCGT"
+>
+> \# dna\[0\] = "C" \# TypeError: strings are immutable
+>
+> mutated = "C" + dna\[1:\] \# build a new string instead
+>
+> print(mutated) \# 'CTGCGT'
+
+## 2.3 Methods: the string toolbox
+
+Strings carry methods, called with dot syntax. The ones you'll lean on:
+
+  --------------------------------------------------------------------------------------------
+  **Method**              **Does**                           **Example → result**
+  ----------------------- ---------------------------------- ---------------------------------
+  .upper()                uppercase                          "atg".upper() → "ATG"
+
+  .lower()                lowercase                          "ATG".lower() → "atg"
+
+  .count(x)               count occurrences                  "ATTA".count("T") → 2
+
+  .find(x)                index of first match, -1 if none   "ATGC".find("GC") → 2
+
+  .replace(a,b)           replace all a with b               "AUG".replace("U","T") → "ATG"
+
+  .startswith(x)          boolean test                       "ATGC".startswith("ATG") → True
+  --------------------------------------------------------------------------------------------
+
+Counting bases with .count() is the direct route to GC content; .replace() gives you transcription (DNA→RNA) in one call; .find() locates a motif or start codon.
+
+  -------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 2 → 2B (methods & GC content): write GC-content and base-count code using these methods.
+  -------------------------------------------------------------------------------------------------------------------------
+
+  -------------------------------------------------------------------------------------------------------------------------
+
+## 2.4 The reverse complement
+
+A central operation: the complement of the reverse strand. Built from two ideas you now have — reversing with \[::-1\] and substituting bases. The clean tool for substitution is str.translate with a translation table:
+
+> dna = "ATGCGT"
+>
+> complement = dna.translate(str.maketrans("ACGT", "TGCA"))
+>
+> print(complement) \# 'TACGCA'
+>
+> rev_comp = complement\[::-1\]
+>
+> print(rev_comp) \# 'ACGCAT'
+>
+> \# or in one line:
+>
+> print(dna.translate(str.maketrans("ACGT","TGCA"))\[::-1\])
+
+str.maketrans("ACGT", "TGCA") builds a mapping A→T, C→G, G→C, T→A; .translate() applies it. You will reimplement this several ways in the exercises, including the naive .replace() approach and why it fails if done carelessly.
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **A subtle bug to anticipate**                                                                                                                                                                                                                                                                                                                                                 |
+|                                                                                                                                                                                                                                                                                                                                                                                |
+| Why not just chain .replace() calls? Because "ATGC".replace("A","T").replace("T","A") first turns every A into T, then turns *all* T's (including the new ones) back into A — corrupting the result. translate substitutes simultaneously, avoiding this. Recognising this class of bug is exactly the kind of thinking that separates a competent programmer from a beginner. |
++================================================================================================================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 2 → 2C (reverse complement): implement it two ways and compare. This is the module's centrepiece exercise.                                                                                                                                                                                                                                      |
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 2.5 Looking ahead
+
+You can now manipulate a single sequence string fluently. But real code applies these operations conditionally and repeatedly — "for every sequence, if GC \> 0.6, do X". That is control flow, and it is Module 3. The combination of string operations (Module 2) with loops and conditionals (Module 3) is enough to write genuinely useful analysis scripts.
+
+  ---------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** finish any remaining Module 2 exercises, including the challenge (a mini ORF-start scanner), before starting Module 3.
+  ---------------------------------------------------------------------------------------------------------------------------------------------
+
+  ---------------------------------------------------------------------------------------------------------------------------------------------
+
+# Module 3 — Control flow: if / for / while
+
+Control flow is where your string skills become analysis. The logic is identical to R and MATLAB; only the syntax and a few idioms differ. The defining feature — Python's indentation — does most of the structural work. Estimated: 5 hours.
+
+## 3.1 Conditionals: if / elif / else
+
+Note elif (not else if), the colons, and the indentation defining each branch. Parentheses around the condition are optional and usually omitted.
+
+> gc = 0.62
+>
+> if gc \> 0.6:
+>
+> category = "GC-rich"
+>
+> elif gc \< 0.4:
+>
+> category = "AT-rich"
+>
+> else:
+>
+> category = "balanced"
+>
+> print(category) \# GC-rich
+
+Comparison operators are familiar (==, !=, \<, \>=). The logical operators are spelled out as words, which is the main surprise:
+
+  -----------------------------------------------------------------------
+  **R / MATLAB**          **Python**              **Meaning**
+  ----------------------- ----------------------- -----------------------
+  && / &                  and                     logical AND
+
+  \|\| / \|               or                      logical OR
+
+  !                       not                     logical NOT
+  -----------------------------------------------------------------------
+
+> length = 1500
+>
+> gc = 0.55
+>
+> if length \> 1000 and 0.4 \<= gc \<= 0.6:
+>
+> print("Candidate gene: good length and balanced GC")
+
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Chained comparisons — a Python treat**                                                                                                                                                                                        |
+|                                                                                                                                                                                                                                 |
+| Python lets you write 0.4 \<= gc \<= 0.6 directly, exactly as in maths. R and MATLAB force you to write two comparisons joined by AND. Small thing, but it makes range checks (very common in QC filters) wonderfully readable. |
++=================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 3 → 3A (conditionals): classify sequences by GC and length. Then return.                                                                                                                         |
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 3.2 Truthiness
+
+In a condition, Python treats some values as "falsy": 0, 0.0, "" (empty string), empty collections, and None. Everything else is "truthy". So if seq: reads as "if the sequence is non-empty". This idiom is everywhere in Python code; get comfortable reading it.
+
+> seq = ""
+>
+> if seq:
+>
+> print("has content")
+>
+> else:
+>
+> print("empty sequence") \# this runs
+
+## 3.3 The for loop iterates over things, not indices
+
+This is the biggest mental shift from MATLAB. A Python for loop walks directly over the **items** of a sequence — characters of a string, elements of a list — not over an index counter.
+
+> dna = "ATGC"
+>
+> for base in dna: \# base takes each character in turn
+>
+> print(base)
+>
+> \# A
+>
+> \# T
+>
+> \# G
+>
+> \# C
+
+If you genuinely need counting numbers, use range(). Note range(n) produces 0, 1, ..., n-1 — it stops *before* n, matching the half-open convention of slicing.
+
+> for i in range(3): \# 0, 1, 2
+>
+> print(i)
+>
+> for i in range(2, 8, 2): \# start, stop, step -\> 2, 4, 6
+>
+> print(i)
+
++------------------------------------------------------------------------------------------------------------------+
+| **enumerate: when you need both item and index**                                                                 |
+|                                                                                                                  |
+| Often you want the position *and* the value. Rather than indexing manually, use enumerate, which hands you both: |
+|                                                                                                                  |
+| > for i, base in enumerate("ATGC"):                                                                              |
+| >                                                                                                                |
+| > print(i, base) \# 0 A / 1 T / 2 G / 3 C                                                                        |
++==================================================================================================================+
++------------------------------------------------------------------------------------------------------------------+
+
+To iterate over a sequence *in steps of three* — reading codons — combine range with slicing: for i in range(0, len(seq), 3): codon = seq\[i:i+3\]. This pattern is the backbone of translation and is drilled in the exercises.
+
+  --------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 3 → 3B (for loops): base counting by iteration, and a codon walker using range(0, len(seq), 3).
+  --------------------------------------------------------------------------------------------------------------------------------
+
+  --------------------------------------------------------------------------------------------------------------------------------
+
+## 3.4 while loops, break, continue
+
+while repeats as long as a condition holds — use it when you don't know the number of iterations in advance (e.g. "keep reading until end of file").
+
+> \# find the first stop codon position, scanning in frame
+>
+> seq = "ATGAAATAGCCC"
+>
+> i = 0
+>
+> while i \< len(seq) - 2:
+>
+> codon = seq\[i:i+3\]
+>
+> if codon in ("TAA", "TAG", "TGA"):
+>
+> print(f"Stop codon {codon} at position {i}")
+>
+> break \# leave the loop immediately
+>
+> i += 3 \# note: no i++ in Python; use += 1
+
+break exits a loop entirely; continue skips to the next iteration. And note i += 3 — Python has no ++ operator; use += 1.
+
+  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 3 → 3C (while + break): scan a reading frame for the first stop codon. Then attempt the challenge: a minimal ORF finder combining everything from Modules 2–3.
+  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Module 4 — Data structures: lists, tuples, dicts, sets
+
+So far you've handled one sequence at a time. Real work means collections: many sequences, counts per base, lookups by ID. Python's four built-in collections cover almost everything, and choosing the right one is a real skill. This is the longest foundations module. Estimated: 8 hours.
+
+## 4.1 Lists — ordered, mutable, your default
+
+A list is an ordered, changeable collection in square brackets. Closest to an R list() or a MATLAB cell array, but used far more freely.
+
+> genes = \["rpoB", "katG", "gyrA"\]
+>
+> print(genes\[0\]) \# 'rpoB' (0-based, like strings)
+>
+> print(len(genes)) \# 3
+>
+> genes.append("inhA") \# add to end -\> \['rpoB','katG','gyrA','inhA'\]
+>
+> genes\[1\] = "katG2" \# lists ARE mutable (unlike strings)
+>
+> print(genes\[-1\]) \# 'inhA'
+>
+> print(genes\[1:3\]) \# slicing works just like strings
+
+Key list methods: .append(x) (add one), .extend(lst) (add many), .sort(), .reverse(), .pop() (remove & return last). Membership uses in: "katG" in genes → True.
+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **The aliasing trap (remember 1.2?)**                                                                                                                                                                                                                                                    |
+|                                                                                                                                                                                                                                                                                          |
+| Because a name points to an object, b = a for lists makes b and a the *same* list — change one, the other changes too. To get an independent copy use b = a.copy() or b = a\[:\]. This surprises everyone once; the exercises make you see it happen so it never bites you in real code. |
++==========================================================================================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 4 → 4A (lists): build and modify a gene list, and reproduce the aliasing bug deliberately. Then return.                                                                                                                                                   |
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 4.2 Tuples — ordered, immutable
+
+A tuple is like a list but cannot change after creation, written with parentheses. Use it for fixed groupings — a coordinate, a record — where immutability signals "this shouldn't be edited".
+
+> feature = ("gyrA", 7302, 9818, "+") \# name, start, end, strand
+>
+> print(feature\[1\]) \# 7302
+>
+> \# feature\[1\] = 0 -\> TypeError: tuples are immutable
+>
+> name, start, end, strand = feature \# tuple unpacking!
+>
+> print(start, end) \# 7302 9818
+
+**Tuple unpacking** (assigning several names at once) is idiomatic Python and you already met it in enumerate. It's also how functions return multiple values, which you'll see in Module 5.
+
+## 4.3 Dictionaries — key → value lookups
+
+The dictionary (dict) is arguably the most important structure in bioinformatics Python. It maps keys to values for instant lookup — a codon to its amino acid, a gene ID to its sequence, a base to its count. Think of an R named list or named vector, but built for exactly this.
+
+> \# count bases with a dictionary
+>
+> counts = {"A": 0, "C": 0, "G": 0, "T": 0}
+>
+> counts\["A"\] += 1
+>
+> print(counts\["A"\]) \# 1
+>
+> print(counts) \# {'A': 1, 'C': 0, 'G': 0, 'T': 0}
+>
+> \# a small codon table
+>
+> codon_table = {"ATG": "M", "TGG": "W", "TAA": "\*"}
+>
+> print(codon_table\["ATG"\]) \# 'M'
+>
+> print("TGG" in codon_table) \# True (membership tests keys)
+
+Iterate over a dict with .items(), which yields key–value pairs (tuple unpacking again):
+
+> for base, n in counts.items():
+>
+> print(f"{base}: {n}")
+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Two dict patterns you'll use constantly**                                                                                                                                                                      |
+|                                                                                                                                                                                                                  |
+| **1. Safe lookup with .get():** counts.get("N", 0) returns 0 if the key "N" is absent, instead of raising an error. Perfect for counting unknown bases.                                                          |
+|                                                                                                                                                                                                                  |
+| **2. Building counts on the fly:** start with {} and do counts\[base\] = counts.get(base, 0) + 1 inside a loop. This tallies any alphabet without predefining the keys.                                          |
++==================================================================================================================================================================================================================+
+| **▶ Practise now —** do Module 4 → 4B (dicts): build a base-frequency counter with .get(), and use a codon dictionary to translate a few codons. This is the most important exercise of Part I — take your time. |
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 4.4 Sets — unique, unordered membership
+
+A set holds unique items with no order, built with {} (with values) or set(). Brilliant for "which unique bases appear?" or fast membership tests, and for set algebra — intersection, union, difference — which maps directly onto comparing gene lists between samples.
+
+> bases = set("ATGCGTAAAT")
+>
+> print(bases) \# {'A', 'C', 'G', 'T'} (unique, unordered)
+>
+> sample1 = {"rpoB", "katG", "gyrA"}
+>
+> sample2 = {"katG", "gyrA", "inhA"}
+>
+> print(sample1 & sample2) \# {'katG', 'gyrA'} shared (intersection)
+>
+> print(sample1 \| sample2) \# union
+>
+> print(sample1 - sample2) \# {'rpoB'} in 1 but not 2 (difference)
+
+Validating a sequence is a one-liner: set(seq) \<= {"A","C","G","T"} is True only if every character is a valid base.
+
+## 4.5 Choosing the right structure
+
+  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **Need**                                                                                                                                                                                              **Use**                 **Why**
+  ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ----------------------- -----------------------------
+  Ordered, will change                                                                                                                                                                                  list                    append, sort, index
+
+  Ordered, fixed record                                                                                                                                                                                 tuple                   immutable, unpackable
+
+  Lookup by key                                                                                                                                                                                         dict                    instant key→value
+
+  Unique items / set math                                                                                                                                                                               set                     membership, intersect/union
+
+  **▶ Practise now —** do Module 4 → 4C (sets) and then the module challenge: a full base-composition + sequence-validation report combining list, dict, and set. This consolidates the whole module.                           
+  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Module 5 — Functions, scope & modules
+
+Up to now your code has run top to bottom. Functions let you name a piece of logic, reuse it, and test it — the step from scripting to engineering, and the foundation of every tool you'll build later. You know functions from R and MATLAB; here is Python's version, its scope rules, and how to split code across files. Estimated: 7 hours.
+
+## 5.1 Defining and calling functions
+
+Use def, a colon, and an indented body. return sends a value back; a function with no return yields None.
+
+> def gc_content(seq):
+>
+> """Return the GC fraction of a DNA sequence."""
+>
+> seq = seq.upper()
+>
+> gc = seq.count("G") + seq.count("C")
+>
+> return gc / len(seq)
+>
+> print(gc_content("ATGCGC")) \# 0.6666666666666666
+
+That triple-quoted line is a **docstring** — documentation accessible via help(gc_content). Writing one for every function is a habit worth forming now; it's expected in published tools and on GitHub.
+
+  --------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 5 → 5A (basic functions): wrap your Module 2 GC and reverse-complement code into clean functions with docstrings.
+  --------------------------------------------------------------------------------------------------------------------------------------------------
+
+  --------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 5.2 Arguments: positional, keyword, default
+
+Arguments can be passed by position or by name, and can have defaults. Defaults make parameters optional.
+
+> def translate(seq, frame=0):
+>
+> """Translate from a given reading frame (default 0)."""
+>
+> seq = seq\[frame:\]
+>
+> \# ... (body) ...
+>
+> return protein
+>
+> translate("ATGAAA") \# frame defaults to 0
+>
+> translate("ATGAAA", frame=1) \# keyword argument, explicit
+>
+> translate("ATGAAA", 1) \# same, positional
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Never use a mutable default argument**                                                                                                                                                                                                                                                         |
+|                                                                                                                                                                                                                                                                                                  |
+| A classic Python trap: def f(x, acc=\[\]) reuses the *same* list across every call, so it accumulates between calls. Use acc=None and create the list inside the function instead. The exercises show this bug live — it's a favourite interview question precisely because it surprises people. |
++==================================================================================================================================================================================================================================================================================================+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+## 5.3 Returning multiple values
+
+Return several values as a tuple; the caller unpacks them. This is cleaner than R's "stuff everything in a named list" approach.
+
+> def base_summary(seq):
+>
+> seq = seq.upper()
+>
+> gc = (seq.count("G") + seq.count("C")) / len(seq)
+>
+> return len(seq), gc \# returns a tuple
+>
+> length, gc = base_summary("ATGCGC") \# unpack into two names
+>
+> print(length, gc) \# 6 0.666...
+
+## 5.4 Scope: local vs global
+
+Names created inside a function are **local** — invisible outside it. A function can *read* outer (global) names but cannot rebind them without the global keyword (which you should almost always avoid). This matches R's lexical scoping closely.
+
+> THRESHOLD = 0.6 \# global constant
+>
+> def is_gc_rich(seq):
+>
+> return gc_content(seq) \> THRESHOLD \# reads global THRESHOLD fine
+>
+> def bad():
+>
+> x = 5 \# local, gone when function returns
+>
+> print(... ) \# x is not visible here
+
+The practical rule: pass everything a function needs as arguments, and return what it produces. Avoid reaching out to globals for inputs. This keeps functions testable and is exactly the discipline that makes a tool reliable.
+
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 5 → 5B (arguments & scope): functions with defaults and multiple return values; observe the mutable-default bug and fix it.
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 5.5 Modules: splitting code across files
+
+A **module** is simply a .py file. Put related functions in one file and import them elsewhere — the beginning of organising a real project, and what you'll formalise into a package in Part II.
+
+> \# --- file: seqtools.py ---
+>
+> def gc_content(seq):
+>
+> seq = seq.upper()
+>
+> return (seq.count("G") + seq.count("C")) / len(seq)
+>
+> def reverse_complement(seq):
+>
+> return seq.upper().translate(str.maketrans("ACGT", "TGCA"))\[::-1\]
+>
+> \# --- file: analysis.py (same folder) ---
+>
+> import seqtools
+>
+> print(seqtools.gc_content("ATGCGC"))
+>
+> \# or import specific names:
+>
+> from seqtools import reverse_complement
+>
+> print(reverse_complement("ATGC"))
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **import and the standard library**                                                                                                                                                                                                                                                                                   |
+|                                                                                                                                                                                                                                                                                                                       |
+| The same import mechanism gives you Python's vast standard library and, later, NumPy/pandas/Biopython. You'll meet import math, import sys, from collections import Counter — that last one, by the way, counts items in one line and will make your Module 4 base-counter trivial. We'll use it properly in Part II. |
++=======================================================================================================================================================================================================================================================================================================================+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+One idiom you'll see in every script: the if \_\_name\_\_ == "\_\_main\_\_": block at the bottom of a file. Code inside it runs only when the file is executed directly, not when it's imported. It's how a file can be both a reusable module and a runnable program — standard structure for anything you put on GitHub. We'll formalise it in Part II; for now, just recognise it.
+
+  ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  **▶ Practise now —** do Module 5 → 5C (modules): create your own seqtools.py with the functions you've written, import it from a notebook, and use it. Then tackle the Part I capstone exercise: a single script that reads a sequence and prints a full report (length, GC, base composition, reverse complement, codon list) using only your own functions. That script is proof you've finished the foundations.
+  ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 5.6 Where Part I leaves you
+
+You can now write structured Python: variables and types, string/sequence manipulation, conditionals and loops, the four core data structures, and functions organised into modules. That is genuinely enough to write useful analysis scripts by hand. Part II builds on it with file I/O (reading real FASTA/FASTQ), error handling and testing, and object-oriented programming — and then Part III hands you the ecosystem (NumPy, pandas, Biopython) that turns your hand-written logic into fast, professional pipelines. Well done for getting through the foundations the hard way: by writing code, not just reading about it.
+

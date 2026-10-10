@@ -1,0 +1,155 @@
+---
+title: "Choosing the Right Test"
+---
+
+### A decision guide for biologists
+
+Keep this open while you analyse. It is the companion to the six course parts: the parts teach *how* each method works; this guide tells you *which* to reach for, and *why*. The whole of test selection comes down to answering four questions about your data — in order.
+
+## The four questions that choose your test
+
+Answer these, in this order, and the test chooses itself.
+
+1.  **What is the RESPONSE variable’s type?** Continuous · count · binary (yes/no) · categorical · ordinal. *This is the single most important question — it decides the model family.*
+
+2.  **What are the PREDICTOR(S)?** None (one sample) · one categorical (how many groups?) · one continuous · several · a mix.
+
+3.  **Are the observations INDEPENDENT?** Or are they grouped / repeated / nested (same individual, tank, site, plot measured more than once)? *Non-independence changes the model, not just the test — and no test fixes it after the fact.*
+
+4.  **Are the ASSUMPTIONS met?** Mainly: are residuals roughly normal with similar spread, and is the relationship linear? Check with plots, then decide parametric vs non-parametric or a transformation.
+
+> **The golden rule:** phrase the biological question as `response ~ predictor(s)` first. Once you can write that line, the model is almost chosen — because in R the formula *is* the model.
+
+## Master decision table
+
+Find the row matching your response type and predictor structure. “R” is the function to call.
+
+### Response = CONTINUOUS (length, mass, concentration, …)
+
+  ---------------------------------------------------------------------------------------------------------------------------------------------------------
+  Predictor(s)                             Question                               Test / model                      R
+  ---------------------------------------- -------------------------------------- --------------------------------- ---------------------------------------
+  none (compare to a value)                Is the mean = some value?              one-sample t-test                 `t.test(y, mu = k)`
+
+  one categorical, **2 groups**            Do two group means differ?             two-sample (Welch) t-test         `t.test(y ~ g)`
+
+  one categorical, 2 groups, **paired**    Differ, same units measured twice?     paired t-test                     `t.test(y1, y2, paired = TRUE)`
+
+  one categorical, **3+ groups**           Do any group means differ?             one-way ANOVA (+ Tukey)           `lm(y ~ g)` → `anova()`; `TukeyHSD()`
+
+  **two** categorical                      Main effects + interaction?            two-way ANOVA                     `lm(y ~ a * b)` → `anova()`
+
+  one **continuous**                       Linear relationship? strength?         correlation / simple regression   `cor.test(x, y)` / `lm(y ~ x)`
+
+  several (mixed)                          Effect of each, adjusting for others   multiple regression               `lm(y ~ x1 + x2 + f)`
+
+  any of the above, **grouped/repeated**   …with non-independence                 linear mixed model                `lmer(y ~ ... + (1 | group))`
+  ---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### Response = COUNT (parasites per host, colonies per plate, reads)
+
+  --------------------------------------------------------------------------------------------------------------------------
+  Predictor(s)                          Test / model                        R
+  ------------------------------------- ----------------------------------- ------------------------------------------------
+  any                                   Poisson regression                  `glm(y ~ ..., family = poisson)`
+
+  any, **overdispersed** (var ≫ mean)   negative binomial / quasi-Poisson   `MASS::glm.nb(...)` / `family = quasipoisson`
+
+  any, **grouped/repeated**             Poisson/NB mixed model (GLMM)       `glmer(y ~ ... + (1|group), family = poisson)`
+  --------------------------------------------------------------------------------------------------------------------------
+
+### Response = BINARY (infected/not, alive/dead)
+
+  ------------------------------------------------------------------------------------------------------------------------------
+  Predictor(s)                               Test / model                      R
+  ------------------------------------------ --------------------------------- -------------------------------------------------
+  one categorical (2×2 table)                chi-square test of independence   `chisq.test(table(a, b))`
+
+  one categorical, **small/sparse counts**   Fisher’s exact test               `fisher.test(table(a, b))`
+
+  two proportions                            test of proportions               `prop.test(x, n)`
+
+  one or more (incl. continuous)             logistic regression               `glm(y ~ ..., family = binomial)` → odds ratios
+
+  any, **grouped/repeated**                  logistic GLMM                     `glmer(y ~ ... + (1|group), family = binomial)`
+  ------------------------------------------------------------------------------------------------------------------------------
+
+### Response = CATEGORICAL (≥2 categories) or many variables at once
+
+  -----------------------------------------------------------------------------------------------------------
+  Situation                                   Method                  R
+  ------------------------------------------- ----------------------- ---------------------------------------
+  two categorical variables                   chi-square / Fisher     `chisq.test()` / `fisher.test()`
+
+  many continuous variables, find structure   PCA (ordination)        `prcomp(X, scale. = TRUE)`
+
+  many variables, find groups                 clustering              `hclust(dist(scale(X)))` / `kmeans()`
+  -----------------------------------------------------------------------------------------------------------
+
+## Parametric or non-parametric? (Question 4)
+
+When a parametric test’s assumptions (normality of residuals, similar variances) look violated, you have three options — in order of preference:
+
+  -------------------------------------------------------------------------------------------------
+  Parametric test              Non-parametric alternative   R (non-parametric)
+  ---------------------------- ---------------------------- ---------------------------------------
+  one-sample / paired t-test   Wilcoxon signed-rank         `wilcox.test(y1, y2, paired = TRUE)`
+
+  two-sample t-test            Mann–Whitney U               `wilcox.test(y ~ g)`
+
+  one-way ANOVA                Kruskal–Wallis               `kruskal.test(y ~ g)`
+
+  Pearson correlation          Spearman correlation         `cor.test(x, y, method = "spearman")`
+  -------------------------------------------------------------------------------------------------
+
+**But do not jump to non-parametric reflexively.** Prefer, in this order:
+
+1.  **Transform** the response if it’s skewed (`log()` for concentrations and counts, `sqrt()` for mild count skew) — often a transformed parametric model is best, keeps interpretable effect sizes, and has more power.
+2.  **Use a GLM** if the response is really a count or a proportion — that is the *correct* model, not a patched-up t-test.
+3.  **Use the non-parametric test** when the data are genuinely ordinal, or small-n and badly non-normal with no good transformation. The cost: less power when data are actually normal, and it tests ranks/medians, not means.
+
+The t-test and ANOVA are **robust** to moderate non-normality, especially at n ≥ \~30 per group (the CLT, Part II). Judge from a QQ plot and a boxplot — not a reflexive Shapiro–Wilk test.
+
+## The one mistake that invalidates the choice: non-independence
+
+Before trusting any test above, ask Question 3 again, because it overrides everything. If you measured the same unit multiple times — several leaves per plant, several cells per animal, repeated visits to a site, tadpoles sharing a tank — those measurements are **not independent**, and treating them as independent (pseudoreplication) makes every p-value above too small.
+
+Two fixes:
+
+-   **Summarise to the independent unit** (one value per plant/tank/site), then use the simple test — safe, simple, loses some information.
+-   **Model the structure** with a mixed model (`lmer`/`glmer`, random effect for the grouping) — keeps all the data and is the modern answer (Part V).
+
+No test in the master table is correct if this question is answered wrong.
+
+## A worked walk-through of the four questions
+
+**“Does fertiliser affect plant height, and does it depend on genotype?”**
+
+1.  Response type? **Height = continuous.** → linear-model family.
+2.  Predictors? **Two categorical** (treatment, genotype), and we want their interaction. → `lm(height ~ treatment * genotype)` → two-way ANOVA.
+3.  Independent? **Yes** — one measurement per plant, plants not grouped. → plain `lm` is fine (no mixed model needed).
+4.  Assumptions? Plot the residuals (`plot(model)`); height is continuous and roughly normal, so parametric ANOVA is appropriate.
+
+→ **Decision:** two-way ANOVA via `lm(height ~ treatment * genotype)`, report effect sizes with CIs, Tukey for pairwise follow-up.
+
+**“Does infection (yes/no) depend on dose and host age?”**
+
+1.  Response? **Binary.** → binomial family.
+2.  Predictors? **Two continuous.** → logistic regression.
+3.  Independent? Yes (one record per host).
+4.  Logistic regression has its own checks (not normality) — fit, then check with binned/`DHARMa` residuals.
+
+→ **Decision:** `glm(infected ~ dose + age, family = binomial)`, report odds ratios with CIs.
+
+## After you choose: the universal workflow
+
+Whichever test the four questions led to, the honest sequence is always the same:
+
+1.  **Plot the data** first (Part I).
+2.  **Fit** the chosen model.
+3.  **Check** its assumptions with residual diagnostics (Parts IV–V).
+4.  **Report the effect size with a 95% CI**, then the p-value — never the p-value alone (the theme of the whole course).
+5.  If you ran several tests, **correct for multiple comparisons** (`p.adjust`, Part VI).
+
+Choosing the right test is necessary but not sufficient: a correctly chosen test, unchecked and reported as a bare p-value, is still bad statistics. The guide gets you to the right tool; Parts I–VI make sure you use it well.
+

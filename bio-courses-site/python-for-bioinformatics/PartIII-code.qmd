@@ -1,0 +1,1270 @@
+---
+title: "Part III — The Bioinformatics Ecosystem — Exercises"
+---
+
+Download the notebooks: [exercises](../downloads/python/py_PartIII_exercises.ipynb) · [solutions](../downloads/python/py_PartIII_solutions.ipynb). Example data is in [downloads/python/data](../downloads/python/data).
+
+::: {.panel-tabset}
+
+## Exercises
+
+<div id="2950f54c" class="cell markdown">
+
+# Python for Bioinformatics — Part III Exercises
+
+## Modules 9–12 · The Ecosystem
+
+Work alongside the theory, in order, following the green **▶ Practise now** pointers.
+
+**Setup:** ensure the `data/` folder (now including `expression.csv`) sits next to this notebook. Run the cell below. If seaborn is missing: `conda install -c conda-forge seaborn`.
+
+</div>
+
+<div id="ddd35353" class="cell code">
+
+``` python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+try:
+    import seaborn as sns
+    print("seaborn", sns.__version__)
+except ImportError:
+    print("seaborn not installed — run: conda install -c conda-forge seaborn")
+print("numpy", np.__version__, "| pandas", pd.__version__)
+for fn in ["data/expression.csv", "data/variants.csv", "data/sample.fasta", "data/sample.fastq"]:
+    print(fn, "OK" if os.path.exists(fn) else "MISSING")
+```
+
+</div>
+
+<div id="eb052e58" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 9 — NumPy
+
+</div>
+
+<div id="10e0cd6b" class="cell markdown">
+
+## 9A. Creating & inspecting arrays
+
+### Worked example
+
+</div>
+
+<div id="88239101" class="cell code">
+
+``` python
+import numpy as np
+quals = np.array([40, 38, 35, 40, 12, 39])
+print(quals, quals.shape, quals.dtype)
+print("mean:", quals.mean(), "| max:", quals.max())
+```
+
+</div>
+
+<div id="27b71dc2" class="cell markdown">
+
+### 9A.1 (easy)
+
+Make a NumPy array of these read lengths: `150, 148, 152, 149, 151, 75`. Print its shape, dtype, mean, min, and max.
+
+</div>
+
+<div id="8c821729" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="01952583" class="cell markdown">
+
+### 9A.2 (harder)
+
+Use `np.arange` to make an array `0,3,6,...,30` (codon start positions). Print it, its length, and reshape a fresh `np.arange(12)` into a 3×4 matrix; print the matrix and its shape.
+
+</div>
+
+<div id="d30c35c3" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="0093f8ac" class="cell markdown">
+
+## 9B. Vectorised ops & boolean masking (centrepiece)
+
+### Worked example
+
+</div>
+
+<div id="7eaaae1f" class="cell code">
+
+``` python
+control = np.array([120.5, 45.0, 88.0, 33.2])
+treated = np.array([97.5, 204.0, 85.3, 138.0])
+log2fc = np.log2(treated / control)
+print(np.round(log2fc, 2))
+print("upregulated (log2fc>1):", log2fc > 1)
+```
+
+</div>
+
+<div id="d198e76b" class="cell markdown">
+
+### 9B.1 (easy — boolean masking)
+
+Given `quals = np.array([40, 38, 12, 40, 8, 39, 25])`:
+
+1.  print only the values \>= 30 (boolean mask),
+2.  print how many are \< 20,
+3.  make a copy and set all values \< 20 to 0, then print it.
+
+</div>
+
+<div id="1efa2ebd" class="cell code">
+
+``` python
+quals = np.array([40, 38, 12, 40, 8, 39, 25])
+# your code here
+```
+
+</div>
+
+<div id="0ac43913" class="cell markdown">
+
+### 9B.2 (harder — Phred to error probability)
+
+Phred score → error probability is `P = 10 ** (-Q/10)`. For `quals = np.array([40, 30, 20, 10])`, compute the error probabilities (vectorised, no loop) and print them rounded to 4 decimals. (Q40 → 0.0001, Q20 → 0.01.)
+
+</div>
+
+<div id="ed3adb9e" class="cell code">
+
+``` python
+quals = np.array([40, 30, 20, 10])
+# your code here
+```
+
+</div>
+
+<div id="b8bafaf4" class="cell markdown">
+
+### 9B.3 (harder — fold change + flag)
+
+`control` and `treated` TPM arrays are given. Compute log2 fold-change, then build a list/array labelling each gene `"up"` (log2fc\>1), `"down"` (log2fc\<-1), or `"flat"`. Hint: `np.select` or `np.where`, or just a comprehension over the array.
+
+</div>
+
+<div id="88b517d4" class="cell code">
+
+``` python
+control = np.array([120.5, 45.0, 88.0, 33.2])
+treated = np.array([97.5, 204.0, 85.3, 138.0])
+genes = ["rpoB", "katG", "gyrA", "inhA"]
+# your code here
+```
+
+</div>
+
+<div id="168ae1bd" class="cell markdown">
+
+## 9C. Axis aggregation
+
+### Worked example
+
+</div>
+
+<div id="27278e95" class="cell code">
+
+``` python
+expr = np.array([[120, 118, 95, 99],
+                 [ 45,  47, 210, 198]])
+print("per gene (axis=1):", expr.mean(axis=1))
+print("per sample (axis=0):", expr.mean(axis=0))
+```
+
+</div>
+
+<div id="7775b7e7" class="cell markdown">
+
+### 9C.1 (easy)
+
+For the matrix below (rows = genes, cols = 3 samples), print the mean per gene and the max per sample using the right axis.
+
+</div>
+
+<div id="eba3d688" class="cell code">
+
+``` python
+m = np.array([[10, 20, 30],
+              [ 5, 15, 25],
+              [50, 40, 30]])
+# your code here
+```
+
+</div>
+
+<div id="5cf46175" class="cell markdown">
+
+### Module 9 CHALLENGE — vectorised expression analysis
+
+You have an expression matrix (rows = 4 genes, columns = control1, control2, treated1, treated2).
+
+1.  compute mean control and mean treated per gene (slice columns, then `mean(axis=1)`),
+2.  compute log2 fold-change per gene (treated/control),
+3.  print each gene with its log2FC and a flag (up/down/flat), all **without an explicit loop over the matrix rows** (a loop only to print is fine).
+
+</div>
+
+<div id="dcbe043d" class="cell code">
+
+``` python
+genes = np.array(["rpoB", "katG", "gyrA", "inhA"])
+# columns: control1, control2, treated1, treated2
+expr = np.array([[120.5, 118.2, 95.1, 99.8],
+                 [ 45.0,  47.3, 210.4, 198.7],
+                 [ 88.0,  91.2,  84.5,  86.1],
+                 [ 33.2,  31.9, 140.8, 135.5]])
+# your code here
+```
+
+</div>
+
+<div id="2e7ec8cd" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 10 — pandas
+
+</div>
+
+<div id="d0d3b1ec" class="cell markdown">
+
+## 10A. DataFrame basics & loading
+
+### Worked example
+
+</div>
+
+<div id="debebf39" class="cell code">
+
+``` python
+import pandas as pd
+df = pd.DataFrame({"gene": ["rpoB","katG","gyrA"], "gc": [0.53,0.61,0.58]})
+print(df)
+variants = pd.read_csv("data/variants.csv")
+print(variants.head())
+print(variants.dtypes)
+```
+
+</div>
+
+<div id="e564d4fd" class="cell markdown">
+
+### 10A.1 (easy)
+
+Build a DataFrame with columns `gene` (rpoB, katG, gyrA, inhA) and `length` (3534, 2223, 2517, 810). Print it, its shape, and the mean length.
+
+</div>
+
+<div id="44291b3a" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="547c61b6" class="cell markdown">
+
+### 10A.2 (harder)
+
+Load `data/variants.csv`. Print: the column names, the dtypes (confirm `quality` is a float, not a string), and `describe()` of the numeric columns.
+
+</div>
+
+<div id="d03da64d" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="6eb14554" class="cell markdown">
+
+## 10B. Selection & filtering (centrepiece)
+
+### Worked example
+
+</div>
+
+<div id="0c402fba" class="cell code">
+
+``` python
+variants = pd.read_csv("data/variants.csv")
+print(variants.loc[0, "gene"])         # label
+print(variants.iloc[0:2])              # position
+print(variants[variants["quality"] >= 40])  # boolean filter
+```
+
+</div>
+
+<div id="a28066ce" class="cell markdown">
+
+### 10B.1 (easy)
+
+From `variants.csv`: select just the `gene` and `position` columns; then select the first 3 rows with `iloc`.
+
+</div>
+
+<div id="641a3cea" class="cell code">
+
+``` python
+variants = pd.read_csv("data/variants.csv")
+# your code here
+```
+
+</div>
+
+<div id="5f06bfef" class="cell markdown">
+
+### 10B.2 (harder — combined filter)
+
+From `variants.csv`, select rows where `gene == "gyrA"` **and** `quality > 40`. Then, separately, rows where `quality < 40` **or** `gene == "pncA"`. Remember the parentheses and `&`/`|`.
+
+</div>
+
+<div id="ce1dfb53" class="cell code">
+
+``` python
+variants = pd.read_csv("data/variants.csv")
+# your code here
+```
+
+</div>
+
+<div id="0ca104a5" class="cell markdown">
+
+### 10B.3 (harder — new column)
+
+Add a column `error_prob = 10 ** (-quality/10)` and a boolean column `pass_qc = quality >= 40`. Print the resulting table.
+
+</div>
+
+<div id="5a93a185" class="cell code">
+
+``` python
+variants = pd.read_csv("data/variants.csv")
+# your code here
+```
+
+</div>
+
+<div id="c134f567" class="cell markdown">
+
+## 10C. groupby
+
+### Worked example
+
+</div>
+
+<div id="2465f3bd" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+print(expr.groupby("condition")["tpm"].mean())
+print(expr.groupby(["gene","condition"])["tpm"].mean())
+```
+
+</div>
+
+<div id="b106ded2" class="cell markdown">
+
+### 10C.1 (easy)
+
+From `expression.csv`, compute the mean TPM **per gene** (across all rows for that gene).
+
+</div>
+
+<div id="014eea31" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+# your code here
+```
+
+</div>
+
+<div id="591fb54a" class="cell markdown">
+
+### 10C.2 (harder)
+
+Compute the mean TPM per gene per condition, then use `.agg(["mean","std"])` to get both mean and standard deviation of TPM per condition.
+
+</div>
+
+<div id="b39d3f34" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+# your code here
+```
+
+</div>
+
+<div id="d6b4ffa5" class="cell markdown">
+
+### Module 10 CHALLENGE — mini expression pipeline
+
+Using `data/expression.csv`:
+
+1.  group to get mean TPM per gene per condition,
+2.  pivot so rows = gene, columns = condition (control, treated) — hint: `.pivot_table(index="gene", columns="condition", values="tpm")`,
+3.  add a `log2fc` column = `log2(treated/control)` (use `np.log2`),
+4.  sort by `log2fc` descending,
+5.  write the result to `expression_summary.csv` and print it.
+
+This is a realistic differential-expression summary.
+
+</div>
+
+<div id="fb33ca25" class="cell code">
+
+``` python
+import numpy as np
+expr = pd.read_csv("data/expression.csv")
+# your code here
+```
+
+</div>
+
+<div id="45969c96" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 11 — Visualisation
+
+</div>
+
+<div id="524091fc" class="cell markdown">
+
+## 11A. matplotlib basics
+
+### Worked example
+
+</div>
+
+<div id="00e84233" class="cell code">
+
+``` python
+import matplotlib.pyplot as plt
+genes = ["rpoB","katG","gyrA","inhA"]
+gc = [0.53, 0.61, 0.58, 0.49]
+fig, ax = plt.subplots(figsize=(6,4))
+ax.bar(genes, gc, color="steelblue")
+ax.set_xlabel("Gene"); ax.set_ylabel("GC content"); ax.set_title("GC per gene")
+ax.set_ylim(0,1)
+fig.tight_layout()
+plt.show()
+```
+
+</div>
+
+<div id="afa34645" class="cell markdown">
+
+### 11A.1 (easy — bar chart)
+
+Make a labelled bar chart of these gene lengths (rpoB 3534, katG 2223, gyrA 2517, inhA 810). Add axis labels and a title.
+
+</div>
+
+<div id="98a35188" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="4e1460db" class="cell markdown">
+
+### 11A.2 (harder — histogram)
+
+Read the per-read mean qualities from `data/sample.fastq` (you can reuse a simple parser, or use the values \[40.0, 38.5, 7.6, 40.0\]) and plot a histogram with `ax.hist`. Label the axes. Save the figure to `quality_hist.png` with `fig.savefig`.
+
+</div>
+
+<div id="a5635656" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="454b7b95" class="cell markdown">
+
+## 11B. seaborn from DataFrames
+
+### Worked example
+
+</div>
+
+<div id="a082d5e3" class="cell code">
+
+``` python
+import seaborn as sns
+expr = pd.read_csv("data/expression.csv")
+ax = sns.boxplot(data=expr, x="condition", y="tpm")
+ax.set_title("Expression by condition")
+plt.show()
+```
+
+</div>
+
+<div id="3234b756" class="cell markdown">
+
+### 11B.1 (easy)
+
+Make a seaborn `barplot` of mean TPM per gene, split by condition (`hue="condition"`), from `expression.csv`. Add a title.
+
+</div>
+
+<div id="bf3cbd45" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+# your code here
+```
+
+</div>
+
+<div id="872bbaad" class="cell markdown">
+
+### 11B.2 (harder — customise)
+
+Make a seaborn boxplot of TPM per gene (`x="gene"`), then use the returned `ax` to set the y-axis label to "TPM" and the title to "Expression distribution per gene". Rotate or keep x-labels as needed.
+
+</div>
+
+<div id="a9b5086d" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+# your code here
+```
+
+</div>
+
+<div id="d38d394c" class="cell markdown">
+
+### Module 11 CHALLENGE — multi-panel figure
+
+Create a figure with **two panels side by side** (`fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11,4))`):
+
+- left: a bar chart of mean TPM per gene (compute with pandas groupby),
+- right: a scatter of control mean TPM (x) vs treated mean TPM (y) per gene, with a diagonal y=x reference line.
+
+Label everything and give the figure a title with `fig.suptitle`. Save to `expression_panels.png`.
+
+</div>
+
+<div id="b00ac75f" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+# your code here
+```
+
+</div>
+
+<div id="c21103ef" class="cell markdown">
+
+------------------------------------------------------------------------
+
+# Module 12 — Biopython
+
+</div>
+
+<div id="19a84bf4" class="cell markdown">
+
+## 12A. Seq objects & translation
+
+### Worked example
+
+</div>
+
+<div id="225eb1ee" class="cell code">
+
+``` python
+from Bio.Seq import Seq
+dna = Seq("ATGGCCATTGTAATGGGCCGCTGA")
+print(len(dna), dna[0:3])
+print("rev-comp:", dna.reverse_complement())
+print("protein:", dna.translate(table=11, to_stop=True))
+```
+
+</div>
+
+<div id="fc0d18f1" class="cell markdown">
+
+### 12A.1 (easy)
+
+Make a `Seq` from `"ATGCGTACGTTAGC"`. Print its length, its reverse complement, and its transcription (RNA).
+
+</div>
+
+<div id="f7f383ac" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="1cb3fdd9" class="cell markdown">
+
+### 12A.2 (harder)
+
+For `cds = Seq("ATGAAACCCGGGTGGTAA")`, translate it (a) with the standard table showing the stop as `*`, and (b) with the bacterial table (11) and `to_stop=True`. Print both.
+
+</div>
+
+<div id="ace8a939" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="9d3da971" class="cell markdown">
+
+## 12B. SeqIO reading
+
+### Worked example
+
+</div>
+
+<div id="cc1555df" class="cell code">
+
+``` python
+from Bio import SeqIO
+for record in SeqIO.parse("data/sample.fasta", "fasta"):
+    seq = record.seq
+    gc = 100*(seq.count("G")+seq.count("C"))/len(seq)
+    print(record.id, len(seq), f"{gc:.1f}% GC")
+```
+
+</div>
+
+<div id="fd46461d" class="cell markdown">
+
+### 12B.1 (easy)
+
+Use `SeqIO.parse` to read `data/sample.fasta`. For each record print its id and the first 10 bases of its sequence.
+
+</div>
+
+<div id="930e92a5" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="941617b2" class="cell markdown">
+
+### 12B.2 (harder — FASTQ qualities)
+
+Use `SeqIO.parse` on `data/sample.fastq`. For each record, get `record.letter_annotations["phred_quality"]` (a list of decoded scores) and print the read id with its mean quality. Note how Biopython decoded the scores for you — no `ord(c)-33`.
+
+</div>
+
+<div id="cf6137ab" class="cell code">
+
+``` python
+# your code here
+```
+
+</div>
+
+<div id="bc24891e" class="cell markdown">
+
+------------------------------------------------------------------------
+
+## PART III CAPSTONE — end-to-end mini-pipeline
+
+This rehearses the exact workflow your future tool will use. Using `data/sample.fasta`:
+
+1.  **Read** every record with `SeqIO.parse`.
+2.  For each, compute: id, length, GC%, and the translated protein (bacterial table 11, to first stop).
+3.  Build a **pandas DataFrame** with one row per sequence (columns: id, length, gc_percent, protein_length).
+4.  **Summarise**: print the mean length and mean GC% across all sequences.
+5.  **Plot**: a bar chart of GC% per gene (matplotlib or seaborn), saved to `pipeline_gc.png`.
+
+When this runs cleanly you've completed Part III: you can go from raw sequence files to a summarised, visualised result using the field's standard tools — and you understand every step because you built simpler versions by hand. Part IV makes your code idiomatic and gets it onto GitHub.
+
+</div>
+
+<div id="f33613e8" class="cell code">
+
+``` python
+from Bio import SeqIO
+from Bio.Seq import Seq
+import pandas as pd
+import matplotlib.pyplot as plt
+# your code here
+```
+
+</div>
+
+
+## Solutions
+
+<div id="88bc36e1" class="cell markdown">
+
+# Python for Bioinformatics — Part III Solutions
+
+## Modules 9–12
+
+Reference solutions with commentary. Run from the folder containing `data/`. Plots will display inline in a notebook.
+
+</div>
+
+<div id="0056be90" class="cell code">
+
+``` python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+print("imports ready")
+```
+
+</div>
+
+<div id="87728909" class="cell markdown">
+
+## Module 9 — NumPy
+
+</div>
+
+<div id="c73e4785" class="cell markdown">
+
+**9A.1**
+
+</div>
+
+<div id="21c831d7" class="cell code">
+
+``` python
+lengths = np.array([150, 148, 152, 149, 151, 75])
+print(lengths.shape, lengths.dtype)
+print("mean", lengths.mean(), "min", lengths.min(), "max", lengths.max())
+```
+
+</div>
+
+<div id="708ba782" class="cell markdown">
+
+**9A.2**
+
+</div>
+
+<div id="f5eb43e9" class="cell code">
+
+``` python
+starts = np.arange(0, 31, 3)
+print(starts, "len", len(starts))
+m = np.arange(12).reshape(3, 4)
+print(m, m.shape)
+```
+
+</div>
+
+<div id="9ef640ba" class="cell markdown">
+
+**9B.1** — boolean masking.
+
+</div>
+
+<div id="f44842e5" class="cell code">
+
+``` python
+quals = np.array([40, 38, 12, 40, 8, 39, 25])
+print(quals[quals >= 30])
+print("count <20:", (quals < 20).sum())
+q2 = quals.copy()
+q2[q2 < 20] = 0
+print(q2)
+```
+
+</div>
+
+<div id="04edaf9b" class="cell markdown">
+
+**9B.2** — Phred → error probability.
+
+</div>
+
+<div id="fa41c6e9" class="cell code">
+
+``` python
+quals = np.array([40, 30, 20, 10])
+err = 10 ** (-quals / 10)
+print(np.round(err, 4))   # [0.0001 0.001  0.01   0.1   ]
+```
+
+</div>
+
+<div id="f4653e4d" class="cell markdown">
+
+**9B.3** — fold change + flag with np.select.
+
+</div>
+
+<div id="b06623f2" class="cell code">
+
+``` python
+control = np.array([120.5, 45.0, 88.0, 33.2])
+treated = np.array([97.5, 204.0, 85.3, 138.0])
+genes = ["rpoB", "katG", "gyrA", "inhA"]
+log2fc = np.log2(treated / control)
+flags = np.select([log2fc > 1, log2fc < -1], ["up", "down"], default="flat")
+for g, fc, fl in zip(genes, log2fc, flags):
+    print(f"{g}: {fc:+.2f} {fl}")
+```
+
+</div>
+
+<div id="174adedb" class="cell markdown">
+
+**9C.1**
+
+</div>
+
+<div id="a6295881" class="cell code">
+
+``` python
+m = np.array([[10, 20, 30], [5, 15, 25], [50, 40, 30]])
+print("mean per gene (axis=1):", m.mean(axis=1))
+print("max per sample (axis=0):", m.max(axis=0))
+```
+
+</div>
+
+<div id="cbe7467d" class="cell markdown">
+
+**Module 9 challenge** — vectorised expression analysis.
+
+</div>
+
+<div id="db6ab1bd" class="cell code">
+
+``` python
+genes = np.array(["rpoB", "katG", "gyrA", "inhA"])
+expr = np.array([[120.5, 118.2, 95.1, 99.8],
+                 [ 45.0,  47.3, 210.4, 198.7],
+                 [ 88.0,  91.2,  84.5,  86.1],
+                 [ 33.2,  31.9, 140.8, 135.5]])
+mean_control = expr[:, 0:2].mean(axis=1)   # first two columns
+mean_treated = expr[:, 2:4].mean(axis=1)   # last two columns
+log2fc = np.log2(mean_treated / mean_control)
+flags = np.select([log2fc > 1, log2fc < -1], ["up", "down"], default="flat")
+for g, fc, fl in zip(genes, log2fc, flags):
+    print(f"{g}: log2FC {fc:+.2f}  ->  {fl}")
+```
+
+</div>
+
+<div id="cb045563" class="cell markdown">
+
+## Module 10 — pandas
+
+</div>
+
+<div id="e5cd0081" class="cell markdown">
+
+**10A.1**
+
+</div>
+
+<div id="1535097e" class="cell code">
+
+``` python
+df = pd.DataFrame({"gene": ["rpoB","katG","gyrA","inhA"],
+                   "length": [3534, 2223, 2517, 810]})
+print(df)
+print("shape", df.shape, "| mean length", df["length"].mean())
+```
+
+</div>
+
+<div id="44c9bb99" class="cell markdown">
+
+**10A.2**
+
+</div>
+
+<div id="dde87575" class="cell code">
+
+``` python
+variants = pd.read_csv("data/variants.csv")
+print(list(variants.columns))
+print(variants.dtypes)
+print(variants.describe())
+```
+
+</div>
+
+<div id="c9005cda" class="cell markdown">
+
+**10B.1**
+
+</div>
+
+<div id="5f3f19bc" class="cell code">
+
+``` python
+variants = pd.read_csv("data/variants.csv")
+print(variants[["gene", "position"]])
+print(variants.iloc[0:3])
+```
+
+</div>
+
+<div id="b7a863c2" class="cell markdown">
+
+**10B.2** — combined filters.
+
+</div>
+
+<div id="2e17b5ce" class="cell code">
+
+``` python
+variants = pd.read_csv("data/variants.csv")
+print(variants[(variants["gene"] == "gyrA") & (variants["quality"] > 40)])
+print(variants[(variants["quality"] < 40) | (variants["gene"] == "pncA")])
+```
+
+</div>
+
+<div id="1519a48e" class="cell markdown">
+
+**10B.3** — new columns.
+
+</div>
+
+<div id="8bf80e6d" class="cell code">
+
+``` python
+variants = pd.read_csv("data/variants.csv")
+variants["error_prob"] = 10 ** (-variants["quality"] / 10)
+variants["pass_qc"] = variants["quality"] >= 40
+print(variants)
+```
+
+</div>
+
+<div id="692a7a63" class="cell markdown">
+
+**10C.1**
+
+</div>
+
+<div id="a7e8ecae" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+print(expr.groupby("gene")["tpm"].mean())
+```
+
+</div>
+
+<div id="acbc6966" class="cell markdown">
+
+**10C.2**
+
+</div>
+
+<div id="189541eb" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+print(expr.groupby(["gene","condition"])["tpm"].mean())
+print(expr.groupby("condition")["tpm"].agg(["mean","std"]))
+```
+
+</div>
+
+<div id="8edb3705" class="cell markdown">
+
+**Module 10 challenge** — mini expression pipeline.
+
+</div>
+
+<div id="2f7e0621" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+means = expr.groupby(["gene","condition"])["tpm"].mean().reset_index()
+wide = means.pivot_table(index="gene", columns="condition", values="tpm")
+wide["log2fc"] = np.log2(wide["treated"] / wide["control"])
+wide = wide.sort_values("log2fc", ascending=False)
+wide.to_csv("expression_summary.csv")
+print(wide)
+```
+
+</div>
+
+<div id="7960409b" class="cell markdown">
+
+## Module 11 — Visualisation
+
+</div>
+
+<div id="92213313" class="cell markdown">
+
+**11A.1** — bar chart.
+
+</div>
+
+<div id="9eeabc8f" class="cell code">
+
+``` python
+genes = ["rpoB","katG","gyrA","inhA"]
+lengths = [3534, 2223, 2517, 810]
+fig, ax = plt.subplots(figsize=(6,4))
+ax.bar(genes, lengths, color="darkorange")
+ax.set_xlabel("Gene"); ax.set_ylabel("Length (bp)"); ax.set_title("Gene lengths")
+fig.tight_layout()
+plt.show()
+```
+
+</div>
+
+<div id="0cc0f54f" class="cell markdown">
+
+**11A.2** — histogram, saved to PNG.
+
+</div>
+
+<div id="d5bd70c8" class="cell code">
+
+``` python
+mean_quals = [40.0, 38.5, 7.6, 40.0]
+fig, ax = plt.subplots(figsize=(6,4))
+ax.hist(mean_quals, bins=8, color="seagreen", edgecolor="black")
+ax.set_xlabel("Mean read quality (Phred)"); ax.set_ylabel("Count")
+ax.set_title("Per-read quality distribution")
+fig.tight_layout()
+fig.savefig("quality_hist.png", dpi=120)
+plt.show()
+print("saved quality_hist.png")
+```
+
+</div>
+
+<div id="48cb6cb9" class="cell markdown">
+
+**11B.1** — seaborn grouped bar.
+
+</div>
+
+<div id="d8fd7af8" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+ax = sns.barplot(data=expr, x="gene", y="tpm", hue="condition")
+ax.set_title("Mean TPM per gene by condition")
+plt.show()
+```
+
+</div>
+
+<div id="f4ea20df" class="cell markdown">
+
+**11B.2** — boxplot, customised via returned ax.
+
+</div>
+
+<div id="efa44179" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+ax = sns.boxplot(data=expr, x="gene", y="tpm")
+ax.set_ylabel("TPM")
+ax.set_title("Expression distribution per gene")
+plt.show()
+```
+
+</div>
+
+<div id="ad4e78b1" class="cell markdown">
+
+**Module 11 challenge** — two-panel figure.
+
+</div>
+
+<div id="445d1914" class="cell code">
+
+``` python
+expr = pd.read_csv("data/expression.csv")
+gene_means = expr.groupby("gene")["tpm"].mean()
+cond_means = expr.groupby(["gene","condition"])["tpm"].mean().unstack()
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11,4))
+ax1.bar(gene_means.index, gene_means.values, color="steelblue")
+ax1.set_title("Mean TPM per gene"); ax1.set_ylabel("TPM")
+
+ax2.scatter(cond_means["control"], cond_means["treated"], s=60)
+lims = [0, max(cond_means.max()) * 1.1]
+ax2.plot(lims, lims, "k--", alpha=0.5)   # y = x reference
+ax2.set_xlabel("control TPM"); ax2.set_ylabel("treated TPM")
+ax2.set_title("Control vs treated")
+for gene in cond_means.index:
+    ax2.annotate(gene, (cond_means.loc[gene,"control"], cond_means.loc[gene,"treated"]))
+
+fig.suptitle("Expression overview")
+fig.tight_layout()
+fig.savefig("expression_panels.png", dpi=120)
+plt.show()
+print("saved expression_panels.png")
+```
+
+</div>
+
+<div id="4f1c8656" class="cell markdown">
+
+## Module 12 — Biopython
+
+</div>
+
+<div id="d2a524db" class="cell markdown">
+
+**12A.1**
+
+</div>
+
+<div id="2be316af" class="cell code">
+
+``` python
+from Bio.Seq import Seq
+dna = Seq("ATGCGTACGTTAGC")
+print("len", len(dna))
+print("rev-comp", dna.reverse_complement())
+print("RNA", dna.transcribe())
+```
+
+</div>
+
+<div id="93861779" class="cell markdown">
+
+**12A.2**
+
+</div>
+
+<div id="2bde8a3a" class="cell code">
+
+``` python
+cds = Seq("ATGAAACCCGGGTGGTAA")
+print("standard:", cds.translate())             # ...* at stop
+print("bacterial, to_stop:", cds.translate(table=11, to_stop=True))
+```
+
+</div>
+
+<div id="19ec1566" class="cell markdown">
+
+**12B.1**
+
+</div>
+
+<div id="0296091d" class="cell code">
+
+``` python
+from Bio import SeqIO
+for record in SeqIO.parse("data/sample.fasta", "fasta"):
+    print(record.id, str(record.seq[:10]))
+```
+
+</div>
+
+<div id="99e14152" class="cell markdown">
+
+**12B.2** — Biopython decodes Phred scores for you.
+
+</div>
+
+<div id="d9d1c85c" class="cell code">
+
+``` python
+for record in SeqIO.parse("data/sample.fastq", "fastq"):
+    q = record.letter_annotations["phred_quality"]
+    print(record.id, "mean Q:", round(sum(q)/len(q), 1))
+```
+
+</div>
+
+<div id="1bebbd05" class="cell markdown">
+
+**Part III capstone** — end-to-end mini-pipeline.
+
+</div>
+
+<div id="06f936ce" class="cell code">
+
+``` python
+from Bio import SeqIO
+
+rows = []
+for record in SeqIO.parse("data/sample.fasta", "fasta"):
+    seq = record.seq
+    gc = 100 * (seq.count("G") + seq.count("C")) / len(seq)
+    protein = seq.translate(table=11, to_stop=True)
+    rows.append({
+        "id": record.id,
+        "length": len(seq),
+        "gc_percent": round(gc, 1),
+        "protein_length": len(protein),
+    })
+
+df = pd.DataFrame(rows)
+print(df)
+print(f"\nMean length: {df['length'].mean():.0f} bp")
+print(f"Mean GC: {df['gc_percent'].mean():.1f}%")
+
+fig, ax = plt.subplots(figsize=(6,4))
+ax.bar(df["id"], df["gc_percent"], color="mediumpurple")
+ax.set_xlabel("Gene"); ax.set_ylabel("GC %"); ax.set_title("GC content per sequence")
+fig.tight_layout()
+fig.savefig("pipeline_gc.png", dpi=120)
+plt.show()
+print("saved pipeline_gc.png")
+```
+
+</div>
+
+<div id="1751361c" class="cell markdown">
+
+------------------------------------------------------------------------
+
+*Part III complete.* You can load, manipulate, summarise, visualise, and handle real sequence data with the field's standard tools — and you understand what each does because you built simpler versions by hand. Part IV: idiomatic Python (comprehensions, generators, decorators), Git/GitHub, and your capstone tool.
+
+</div>
+
+
+:::
+

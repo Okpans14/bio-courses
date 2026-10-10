@@ -1,0 +1,328 @@
+---
+title: "Part IV — Your Own Tools & Pipelines — Theory"
+---
+
+## From first principles to writing your own tools
+
+### PART IV — Your Own Tools & Pipelines · Modules 13–18
+
+*reproducible environments & git · command-line tools · packaging · wrapping external tools · real formats & APIs · pipelines with Snakemake*
+
+Read a section, then do the matching exercises in the notebook before continuing.
+
+## Where Part IV takes you
+
+Parts I–III taught you to write Python, read real files, build classes, and use the scientific ecosystem. But everything so far has lived in a notebook on your machine. Part IV closes the loop the course title promises: it turns your code into **tools other people can install and run**, and **pipelines** that process real data reproducibly.
+
+This is the half that separates “I can write a script” from “I built a tool my lab uses.” You will package your functions into an installable library, wrap them in a command-line interface, version them with git, drive external bioinformatics programs from Python, read the formats real data actually arrives in (BAM, VCF), pull data from NCBI, and finally chain it all into a reproducible Snakemake pipeline.
+
+**Time guide.** Module 13 ≈ 5h · Module 14 ≈ 5h · Module 15 ≈ 6h · Module 16 ≈ 5h · Module 17 ≈ 7h · Module 18 ≈ 7h. Total ≈ 35 hours.
+
+**Setup for this part.** Beyond the course environment you built in Chapter 0, you will install a few tools as each module needs them: `argparse` and `subprocess` ship with Python; `pysam`, `cyvcf2`, and `snakemake` install from conda/pip; and you will need `git` and a free GitHub account. The exercises note each one.
+
+## Module 13 — Reproducible environments & version control
+
+Estimated: 5 hours. Before you share code, you must be able to reproduce it — the same packages, tracked over time. Two tools do this: **environments** (which packages) and **git** (which version).
+
+### 13.1 Why environments
+
+Your analysis depends on specific package versions. Run it next year, or on a colleague’s machine, and newer versions may change results or break it. An **environment** pins the exact set of packages so the analysis is reproducible. You met `conda` in Chapter 0; here you learn to *capture* and *share* an environment.
+
+### 13.2 Capturing a conda environment
+
+    conda activate biopy
+    conda env export --from-history > environment.yml   # the packages you asked for
+
+`environment.yml` lists the environment’s name, channels, and dependencies. Anyone can recreate it exactly:
+
+    conda env create -f environment.yml
+    conda activate biopy
+
+The `--from-history` flag records only what you explicitly installed (portable across operating systems), rather than every transitive dependency pinned to your exact build. Commit `environment.yml` alongside your code, and the environment travels with it.
+
+(The lighter-weight alternative, without conda, is a virtual environment: `python -m venv .venv`, activate it, `pip install ...`, then `pip freeze > requirements.txt`. Same idea; conda is preferred in bioinformatics because it also installs non-Python tools like `samtools`.)
+
+### 13.3 Version control with git
+
+**git** records snapshots (“commits”) of your project over time, so you can see what changed, revert mistakes, and collaborate. The core loop:
+
+    git init                      # start tracking this folder (once)
+    git add analysis.py           # stage changes
+    git commit -m "Add GC filter" # save a snapshot with a message
+    git log --oneline             # see the history
+
+A `.gitignore` file lists things *not* to track — data, caches, secrets:
+
+    __pycache__/
+    *.pyc
+    .ipynb_checkpoints/
+    data/
+    .env
+
+### 13.4 GitHub: backup and sharing
+
+GitHub hosts your git repository online. Create an empty repo there, then:
+
+    git remote add origin https://github.com/USERNAME/mytool.git
+    git branch -M main
+    git push -u origin main       # upload; later just `git push`
+
+Now your code is backed up, versioned, and shareable by a link. Authentication uses a **Personal Access Token** (not your password) or the GitHub CLI / GitHub Desktop.
+
+### 13.5 The habit
+
+From now on: every project starts with `git init` and an `environment.yml`; every meaningful change is a commit with a clear message; the repo lives on GitHub. This is the substrate everything else in Part IV sits on.
+
+> **▶ Practise now — Module 13 → sections 13A–13B.**
+
+## Module 14 — Command-line tools
+
+Estimated: 5 hours. Bioinformatics runs on the command line. A script you call as `python gc.py sample.fasta --min-gc 0.4` is a *tool*; one you edit to change inputs is not. `argparse` (standard library) turns a script into a proper CLI.
+
+### 14.1 The problem with hard-coded inputs
+
+A script with `path = "data/sample.fasta"` at the top must be edited for every new file — error-prone and un-automatable. A command-line interface takes inputs as *arguments*, so the same tool runs on any file, and can be scripted and piped.
+
+### 14.2 argparse basics
+
+    import argparse
+
+    def main():
+        parser = argparse.ArgumentParser(description="Report GC content per sequence.")
+        parser.add_argument("fasta", help="input FASTA file")                 # positional
+        parser.add_argument("--min-gc", type=float, default=0.0,
+                            help="only report sequences with GC >= this")      # optional
+        parser.add_argument("-o", "--output", help="write to this file instead of stdout")
+        args = parser.parse_args()
+
+        # ... use args.fasta, args.min_gc, args.output ...
+
+    if __name__ == "__main__":
+        main()
+
+Run it as `python gc.py sample.fasta --min-gc 0.4`. argparse gives you, for free: type conversion (`type=float`), defaults, a `-h/--help` message, and clear errors on bad input. **Positional** arguments are required and order-based; **optional** arguments (`--flag`) are named and can have defaults.
+
+### 14.3 The `if __name__ == "__main__"` guard
+
+This line means “run `main()` only when the file is executed directly, not when it’s imported.” It lets the same file be both a runnable tool *and* an importable module whose functions you reuse — essential once you package it (Module 15).
+
+### 14.4 Reading from stdin, writing to stdout
+
+Unix tools compose by piping. Support that by defaulting to standard streams:
+
+    import sys
+    out = open(args.output, "w") if args.output else sys.stdout
+    print(result, file=out)
+
+Now `python gc.py sample.fasta | sort` works, which is how your tool joins a real pipeline.
+
+### 14.5 click (a nicer alternative)
+
+For bigger tools, the third-party `click` library reduces boilerplate with decorators:
+
+    import click
+
+    @click.command()
+    @click.argument("fasta")
+    @click.option("--min-gc", default=0.0, help="GC threshold")
+    def main(fasta, min_gc):
+        ...
+
+`argparse` is always available and fine for most tools; reach for `click` when you have many commands or want subcommands (`mytool align`, `mytool call`).
+
+> **▶ Practise now — Module 14 → sections 14A–14B.**
+
+## Module 15 — Packaging your own tool
+
+Estimated: 6 hours. The capstone of “writing your own tools”: turn your functions into an installable package, so `pip install` works and `import seqtools` works from anywhere — not just the folder with the file.
+
+### 15.1 Why package
+
+`source`-ing or copying a `.py` file around breaks as projects grow. A package gives you: a stable import name, a version, declared dependencies, an installable command-line entry point, and one-line installation for others. It is how your tool goes on GitHub and into your lab’s workflow.
+
+### 15.2 The modern layout
+
+    seqtools/
+    ├── pyproject.toml          # metadata, dependencies, entry points
+    ├── README.md
+    ├── LICENSE
+    ├── src/
+    │   └── seqtools/
+    │       ├── __init__.py     # marks it a package; can expose the public API
+    │       ├── sequence.py     # your functions/classes
+    │       └── cli.py          # the argparse main() from Module 14
+    └── tests/
+        └── test_sequence.py    # pytest tests (Module 7)
+
+The `src/` layout is the current best practice — it prevents accidentally importing the local folder instead of the installed package.
+
+### 15.3 pyproject.toml
+
+This one file replaces the old `setup.py`. A minimal version:
+
+    [project]
+    name = "seqtools"
+    version = "0.1.0"
+    description = "Small sequence utilities for bioinformatics"
+    requires-python = ">=3.10"
+    dependencies = ["biopython>=1.80"]
+
+    [project.scripts]
+    seq-gc = "seqtools.cli:main"      # creates a `seq-gc` command that calls cli.main()
+
+    [build-system]
+    requires = ["hatchling"]
+    build-backend = "hatchling.build"
+
+The `[project.scripts]` section is the magic: after install, typing `seq-gc sample.fasta` runs your `main()` — your CLI from Module 14 becomes a real system command.
+
+### 15.4 Install it (editable) and test
+
+    pip install -e .        # editable install: edits to the source take effect immediately
+    python -c "import seqtools; print(seqtools.gc_content('ATGC'))"
+    seq-gc data/sample.fasta
+    pytest                  # run your tests
+
+`pip install -e .` (“editable”) installs the package but links to your source, so you develop and test without reinstalling. This is the daily loop.
+
+### 15.5 Share it
+
+Commit the package to GitHub (Module 13). Others install it directly from the repo:
+
+    pip install git+https://github.com/USERNAME/seqtools.git
+
+Add a README with usage, pick a licence, and tag a version. You have published a bioinformatics tool — the promise of the course, delivered.
+
+> **▶ Practise now — Module 15 → sections 15A–15B.**
+
+## Module 16 — Wrapping external tools with subprocess
+
+Estimated: 5 hours. Real pipelines glue together existing programs — `bwa`, `samtools`, `bcftools`, `TB-Profiler`. Python’s `subprocess` module runs them and captures their output, so your script can orchestrate a whole workflow.
+
+### 16.1 Running a command
+
+    import subprocess
+
+    result = subprocess.run(
+        ["samtools", "--version"],       # command as a LIST of arguments
+        capture_output=True, text=True, check=True
+    )
+    print(result.stdout)
+
+Pass the command as a **list** (`["samtools", "view", "-b", "in.sam"]`), never one big string — this avoids shell-quoting bugs and injection risks. `capture_output=True` grabs stdout/stderr; `text=True` returns strings not bytes; `check=True` raises an exception if the tool fails (so errors don’t pass silently).
+
+### 16.2 Handling failure
+
+    try:
+        subprocess.run(["bwa", "index", ref], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"bwa failed (exit {e.returncode})", file=sys.stderr)
+        raise
+
+External tools fail (missing file, bad reference). `check=True` + catching `CalledProcessError` lets your wrapper fail loudly and clearly instead of continuing on broken output — the error-handling discipline from Part II, applied to subprocesses.
+
+### 16.3 Chaining steps and files
+
+Most bioinformatics tools read and write *files*, so you orchestrate by passing paths between steps:
+
+    subprocess.run(["bwa", "mem", ref, reads], stdout=open("aln.sam", "w"), check=True)
+    subprocess.run(["samtools", "sort", "-o", "aln.bam", "aln.sam"], check=True)
+    subprocess.run(["samtools", "index", "aln.bam"], check=True)
+
+This *works*, but hand-managing intermediate files and reruns gets fragile fast — which is exactly the problem Snakemake solves (Module 18).
+
+### 16.4 A safety note
+
+Never build commands by string-concatenating user input with `shell=True` — that is a command-injection hole. Keep the list form, avoid `shell=True`, and validate paths. Your wrapper should be as careful about bad input as any other tool you write.
+
+> **▶ Practise now — Module 16 → sections 16A–16B.**
+
+## Module 17 — Real bioinformatics formats & APIs
+
+Estimated: 7 hours. In Part II you parsed FASTA and FASTQ by hand. Real analyses also produce **alignments (BAM/SAM)** and **variants (VCF)**, which are complex binary/structured formats you should never parse by hand. `pysam` and `cyvcf2` read them properly; `Bio.Entrez` pulls data from NCBI.
+
+### 17.1 Alignments with pysam
+
+    import pysam
+
+    bam = pysam.AlignmentFile("aln.bam", "rb")     # "rb" = read BAM (binary)
+    for read in bam.fetch("chr1", 1000, 2000):     # reads overlapping a region
+        print(read.query_name, read.reference_start, read.mapping_quality)
+    bam.close()
+
+`pysam` wraps the same `htslib` that `samtools` uses, so it is fast and correct. You can iterate reads, fetch by region (needs an index — `samtools index`), and inspect flags, CIGAR, and quality.
+
+### 17.2 Variants with VCF
+
+    import pysam
+    vcf = pysam.VariantFile("variants.vcf.gz")      # bgzipped + indexed
+    for rec in vcf.fetch("chr1", 0, 100000):
+        print(rec.chrom, rec.pos, rec.ref, list(rec.alts), rec.qual)
+        for sample, data in rec.samples.items():
+            print("  ", sample, data["GT"])          # genotype
+
+(`cyvcf2` is a faster alternative with a similar API, popular for large cohort VCFs.) For your TB drug-resistance work, this is how you’d read a called-variant file and check positions in resistance genes programmatically — the proper version of the by-hand CSV parsing in Part II.
+
+### 17.3 Fetching data from NCBI with Entrez
+
+    from Bio import Entrez, SeqIO
+    Entrez.email = "you@example.com"                 # NCBI requires an identifying email
+
+    handle = Entrez.efetch(db="nucleotide", id="NC_000962.3",
+                           rettype="fasta", retmode="text")
+    record = SeqIO.read(handle, "fasta")             # the M. tuberculosis reference genome
+    handle.close()
+    print(record.id, len(record.seq))
+
+`Bio.Entrez` queries NCBI’s databases (nucleotide, protein, PubMed, …) so your tool can fetch references and metadata automatically rather than by manual download. Respect NCBI’s usage rules: set an email, and rate-limit requests (get an API key for heavier use).
+
+### 17.4 The principle
+
+Don’t hand-parse a format a mature library handles — you’ll get edge cases wrong (multi-allelic variants, supplementary alignments, soft-clips). You learned to parse FASTA by hand to *understand* it; for BAM and VCF, use `pysam`/`cyvcf2` and spend your effort on the biology.
+
+> **▶ Practise now — Module 17 → sections 17A–17B.**
+
+## Module 18 — Pipelines with Snakemake
+
+Estimated: 7 hours. The capstone. A real analysis is many steps over many samples; running them by hand (or a long `subprocess` script) is fragile and un-reproducible. **Snakemake** is a Python-based workflow manager that defines steps as **rules**, works out the dependencies, runs only what’s needed, and parallelises — the standard for reproducible bioinformatics pipelines.
+
+### 18.1 The idea: rules and dependencies
+
+You describe *what each step produces from what inputs*; Snakemake figures out the order. A `Snakefile`:
+
+    rule all:
+        input: "results/report.txt"          # the final target you want
+
+    rule gc_report:
+        input:  "data/{sample}.fasta"
+        output: "results/{sample}.gc.txt"
+        shell:  "seq-gc {input} > {output}"   # your own packaged tool from Module 15!
+
+    rule combine:
+        input:  expand("results/{s}.gc.txt", s=["rpoB", "katG", "gyrA"])
+        output: "results/report.txt"
+        shell:  "cat {input} > {output}"
+
+Snakemake reads this backwards from `rule all`: to make `report.txt` it needs the per-sample files, which the `gc_report` rule makes from the FASTAs. The `{sample}` **wildcard** means one rule handles every sample.
+
+### 18.2 Running it
+
+    snakemake --cores 4            # run, using 4 CPUs, only building what's missing
+    snakemake --dry-run            # show what WOULD run, without doing it
+    snakemake --dag | dot -Tpng > dag.png   # visualise the dependency graph
+
+### 18.3 Why it beats a script
+
+-   **Reproducible** — the whole workflow is declared in one file, versioned in git.
+-   **Incremental** — change one input and Snakemake reruns only the affected steps, not everything.
+-   **Scalable** — the same `Snakefile` runs on your laptop or a HPC cluster by changing a flag.
+-   **Self-documenting** — the DAG *is* the pipeline diagram.
+
+For your drug-resistance work, a Snakemake pipeline — download reference → align reads → call variants → annotate resistance → report, each a rule wrapping `bwa`/`samtools`/`bcftools`/`pysam` — is the professional, publishable form of the analysis.
+
+### 18.4 Where the course leaves you
+
+You can now build Python that is not just correct but *shippable*: packaged and installable, driven from the command line, version-controlled on GitHub, able to orchestrate external tools and read the field’s real formats, and assembled into a reproducible pipeline. That is the full arc the title promised — from first principles to writing, and shipping, your own tools.
+
+> **▶ Practise now — Module 18 → the Part IV capstone.**
+
