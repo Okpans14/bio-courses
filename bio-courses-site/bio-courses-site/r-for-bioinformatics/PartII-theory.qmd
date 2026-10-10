@@ -1,0 +1,249 @@
+---
+title: "Part II — Real Programming — Theory"
+---
+
+## From first principles to writing your own tools
+
+### PART II — Real Programming · Modules 6–8
+
+*Reading & writing files · errors, debugging & testing · object systems (S3/S4)*
+
+Read a section, then do the matching exercises in `PartII_exercises.R` before continuing.
+
+## Where Part II takes you
+
+In Part I every value was typed into your code by hand. Real bioinformatics starts when data comes from a file — a FASTA, a FASTQ run, a CSV of variants — and results go back out to a file. That is Module 6.
+
+Then comes the difference between code that works on your laptop today and code other people can trust: it handles bad input gracefully (Module 7, errors and debugging) and proves it still works after you change it (Module 7, testing). Finally, Module 8 introduces R’s object systems — bundling data and behaviour into your own types, like a `sequence` object that knows its own GC content. This is how Bioconductor is built, and how you will structure the tool you put on GitHub in Part V.
+
+**Time guide.** Module 6 ≈ 6h · Module 7 ≈ 6h · Module 8 ≈ 7h. Total ≈ 19 hours.
+
+**Sample data.** This part uses the shared `data/` folder: `sample.fasta`, `sample.fastq`, `variants.csv`, `gc_report.tsv`. Keep it inside your RStudio project so the paths in the examples resolve.
+
+## Module 6 — Reading & writing files
+
+Estimated: 6 hours. This module connects your code to the real world. We cover file basics, then the formats you will meet constantly: FASTA, FASTQ, and CSV/TSV. We parse FASTA by hand first — not because you will do that forever (Bioconductor does it in Part IV), but because understanding the parse is what lets you debug a malformed file.
+
+### 6.1 The simplest reads: `readLines` and `readr`
+
+Base R reads a whole text file into a character vector, one element per line:
+
+    lines <- readLines("data/sample.fasta")
+    length(lines)   # number of lines
+    lines[1]        # ">rpoB Salmonella Paratyphi B ..."
+
+Unlike Python, there is no `open()`/`with` dance — `readLines()` opens, reads, and closes for you. For large files you can still stream a connection, but for course-sized data `readLines()` is all you need.
+
+For **tabular** files, the tidyverse **readr** package is the modern choice — fast, and it never silently turns strings into factors:
+
+    library(readr)
+    variants <- read_csv("data/variants.csv")   # a tibble
+    gc       <- read_tsv("data/gc_report.tsv")  # tab-separated
+
+Base R’s `read.csv()` works too and needs no package, but set `stringsAsFactors = FALSE` on older R versions.
+
+### 6.2 Writing files
+
+    writeLines(c(">myseq", "ATGCGT"), "out.fasta")   # character vector -> lines
+    write_csv(variants, "out.csv")                    # readr: a tibble -> CSV
+    cat("log entry\n", file = "run.log", append = TRUE)  # append a line
+
+`writeLines()` is the counterpart to `readLines()`; `write_csv()` to `read_csv()`.
+
+### 6.3 Parsing FASTA by hand
+
+A FASTA file is header lines (starting `>`) followed by sequence lines. The idiomatic R parse uses vectorised tools, not a character-by-character loop:
+
+    parse_fasta <- function(path) {
+      lines <- readLines(path)
+      headers <- grep("^>", lines)             # positions of header lines
+      ids <- sub("^>(\\S+).*", "\\1", lines[headers])  # first word after '>'
+      # for each header, the sequence is the lines until the next header
+      starts <- headers + 1
+      ends   <- c(headers[-1] - 1, length(lines))
+      seqs <- mapply(function(a, b) paste(lines[a:b], collapse = ""), starts, ends)
+      setNames(seqs, ids)                      # named vector: id -> sequence
+    }
+    fa <- parse_fasta("data/sample.fasta")
+    names(fa)        # "rpoB" "katG" "gyrA"
+    nchar(fa["rpoB"])
+
+Three ideas worth naming: `grep("^>", lines)` finds header *positions* with a regular expression; `sub()` with a capture group `\\1` extracts the ID; `mapply()` applies a two-argument function across paired start/end vectors (a vectorised loop). You will reuse this shape often.
+
+### 6.4 FASTQ: four lines per read
+
+FASTQ repeats in blocks of four: `@id`, sequence, `+`, quality. Because the structure is perfectly regular, you can index it arithmetically rather than loop:
+
+    fq <- readLines("data/sample.fastq")
+    ids   <- sub("^@", "", fq[seq(1, length(fq), by = 4)])
+    seqs  <- fq[seq(2, length(fq), by = 4)]
+    quals <- fq[seq(4, length(fq), by = 4)]
+    data.frame(id = ids, length = nchar(seqs))
+
+`seq(1, n, by = 4)` generates `1, 5, 9, ...` — the header positions — and so on for each line role. Turning a regular file layout into index arithmetic is a very R way to think.
+
+### 6.5 CSV/TSV and a first look at the data
+
+Once a table is in, inspect it before trusting it:
+
+    variants <- read_csv("data/variants.csv")
+    str(variants)          # columns and types
+    head(variants)         # first rows
+    summary(variants$quality)   # min / quartiles / mean / max
+    nrow(variants)
+
+That inspection habit — types, head, summary — catches the majority of data problems before they reach your analysis.
+
+> **▶ Practise now — Module 6 → sections 6A–6C in** `PartII_exercises.R`**.**
+
+## Module 7 — Errors, debugging & testing
+
+Estimated: 6 hours. Code that only works on perfect input is not finished. This module is about failing clearly, finding the cause fast, and proving correctness.
+
+### 7.1 Conditions: `message`, `warning`, `stop`
+
+R has three signalling levels:
+
+    message("just FYI — processing ", n, " reads")  # informational (to stderr)
+    warning("quality below 20 at 3 positions")       # something looks off, keep going
+    stop("file not found: ", path)                    # fatal — halt here
+
+Use `stop()` to refuse bad input loudly; use `warning()` for recoverable oddities; use `message()` for progress notes. (Never use `print()` for progress — it clutters return values and can’t be suppressed cleanly.)
+
+### 7.2 Handling errors: `tryCatch`
+
+To catch an error and respond instead of crashing, wrap the risky call in `tryCatch()`:
+
+    safe_read <- function(path) {
+      tryCatch(
+        read_csv(path),
+        error   = function(e) { message("could not read ", path, ": ", conditionMessage(e)); NULL },
+        warning = function(w) { message("warning while reading: ", conditionMessage(w)); NULL }
+      )
+    }
+
+The handlers receive the condition object; `conditionMessage(e)` pulls out its text. `tryCatch` is R’s `try`/`except`.
+
+### 7.3 Validating input: `stopifnot`
+
+Guard a function’s assumptions up front. `stopifnot()` errors unless every expression is `TRUE`:
+
+    gc_content <- function(seq) {
+      stopifnot(is.character(seq), length(seq) == 1, nchar(seq) > 0)
+      b <- strsplit(toupper(seq), "")[[1]]
+      if (!all(b %in% c("A","C","G","T")))
+        stop("non-ACGT character in sequence")
+      sum(b %in% c("G","C")) / length(b)
+    }
+
+Failing early with a clear message beats returning a wrong number silently.
+
+### 7.4 Debugging deliberately
+
+When something misbehaves:
+
+-   `traceback()` — run it right after an error to see the chain of calls that led there.
+-   `browser()` — drop a `browser()` line into a function; execution pauses there and you get an interactive prompt to inspect variables, step with `n`, continue with `c`.
+-   `debug(f)` — enter the browser automatically every time `f` is called (`undebug(f)` to stop).
+-   `print()`**/**`cat()` **tracing** — crude but effective for a quick look.
+
+RStudio also has a visual debugger (set breakpoints in the margin), which wraps these same tools.
+
+### 7.5 Testing: proving your code works
+
+**The quick check —** `stopifnot` **as an inline assertion:**
+
+    stopifnot(gc_content("GGCC") == 1)
+    stopifnot(abs(gc_content("ATGC") - 0.5) < 1e-9)   # compare floats with a tolerance
+
+**Real tests —** `testthat`**.** The standard R testing package. You write expectations; they pass silently or report failures:
+
+    library(testthat)
+
+    test_that("gc_content is correct", {
+      expect_equal(gc_content("GGCC"), 1)
+      expect_equal(gc_content("ATGC"), 0.5)
+      expect_error(gc_content("ATGX"))      # non-ACGT must error
+      expect_error(gc_content(""))           # empty must error
+    })
+
+`expect_equal()` compares with a sensible numeric tolerance (so you don’t fight floating point); `expect_error()` passes only if the code *does* throw. In Part V these tests live in a package’s `tests/` folder and run automatically. The discipline to adopt now: whenever you fix a bug, add a test that would have caught it.
+
+> **▶ Practise now — Module 7 → sections 7A–7C in** `PartII_exercises.R`**.**
+
+## Module 8 — Object systems (S3 and S4)
+
+Estimated: 7 hours. Object-oriented programming bundles data with the behaviour that belongs to it. R has several object systems; this module covers **S3** (simple, everywhere, what you will use most) and introduces **S4** (formal, used throughout Bioconductor).
+
+### 8.1 S3: class is just an attribute
+
+S3 is remarkably lightweight. An object becomes a given class simply by setting its `class` attribute — usually inside a **constructor** function:
+
+    new_sequence <- function(bases, id = NA_character_) {
+      bases <- toupper(bases)
+      stopifnot(is.character(bases), length(bases) == 1)
+      structure(
+        list(bases = bases, id = id),
+        class = "sequence"
+      )
+    }
+    s <- new_sequence("ATGCGC", id = "rpoB")
+    class(s)   # "sequence"
+
+`structure(x, class = "sequence")` returns `x` with its class set. The object itself is just a list; the class label is what lets R dispatch methods to it.
+
+### 8.2 Methods and generics
+
+A **generic** is a function that behaves differently depending on its argument’s class. R picks the method by name: `print.sequence` is the `print` method for class `sequence`. Define a method by naming it `generic.class`:
+
+    print.sequence <- function(x, ...) {
+      cat("<sequence", if (!is.na(x$id)) x$id else "", ">\n")
+      cat("  length:", nchar(x$bases), "bp\n")
+      cat("  bases: ", x$bases, "\n")
+      invisible(x)
+    }
+    s   # now prints using print.sequence automatically
+
+You can add methods for existing generics (`print`, `summary`, `length`, `format`) or create your own generic with `UseMethod()`:
+
+    gc <- function(x, ...) UseMethod("gc")           # declare the generic
+    gc.sequence <- function(x, ...) {                 # its method for 'sequence'
+      b <- strsplit(x$bases, "")[[1]]
+      sum(b %in% c("G","C")) / length(b)
+    }
+    gc(s)   # 0.6667 — dispatched to gc.sequence
+
+When you call `gc(s)`, R sees `s` is a `sequence` and routes to `gc.sequence`. That is the whole mechanism: name methods `generic.class`, declare generics with `UseMethod`.
+
+### 8.3 Inheritance
+
+An object can carry several classes, from most to least specific. Methods are searched in that order, and `NextMethod()` passes control to the parent’s method:
+
+    new_dna <- function(bases, id = NA_character_) {
+      obj <- new_sequence(bases, id)
+      class(obj) <- c("dna", "sequence")   # 'dna' first, then 'sequence'
+      obj
+    }
+    revcomp <- function(x, ...) UseMethod("revcomp")
+    revcomp.dna <- function(x, ...) {
+      comp <- c(A="T", T="A", G="C", C="G")[strsplit(x$bases, "")[[1]]]
+      new_dna(paste(rev(comp), collapse = ""), id = x$id)
+    }
+    d <- new_dna("ATGC", "test")
+    gc(d)        # falls back to gc.sequence (inherited)
+    revcomp(d)   # uses revcomp.dna, returns a new dna object
+
+### 8.4 A note on S4 and R6
+
+**S4** is R’s formal object system: classes with declared slots and types, created with `setClass()`, `setGeneric()`, `setMethod()`, and accessed with `@`. It is stricter than S3 and is the backbone of **Bioconductor** — when you meet a `DNAStringSet` or `SummarizedExperiment` in Part IV, you are using S4 objects. You rarely need to *define* S4 classes as a beginner, but recognising `@slot` access and `setMethod()` will make Bioconductor code readable.
+
+**R6** is a third system giving classic reference semantics (objects that mutate in place, like Python classes). It is common in web and simulation code, less so in core bioinformatics.
+
+For your own tools, **S3 is the right default**: minimal ceremony, universally understood, and exactly what most CRAN packages use.
+
+### 8.5 Where Part II leaves you
+
+You can now read and write the file formats bioinformatics runs on, write code that validates its input and fails with clear messages, debug it deliberately, prove it with `testthat`, and bundle data and behaviour into your own S3 classes. Part III hands you the tidyverse — the high-level toolkit (dplyr, tidyr, ggplot2) that does most day-to-day data analysis — and Part IV brings in Bioconductor, built on the S4 objects you just met.
+
+> **▶ Practise now — Module 8 → sections 8A–8B and the Part II capstone in** `PartII_exercises.R`**.**
+

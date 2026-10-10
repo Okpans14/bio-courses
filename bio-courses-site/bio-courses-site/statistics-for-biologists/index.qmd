@@ -1,0 +1,25 @@
+---
+title: "Statistics for Biologists"
+subtitle: "From study design to models that answer biological questions"
+---
+
+The statistics a working biologist actually needs — taught in R, with every example drawn from biology. Assumes the basic R from the companion course; the focus here is the statistics.
+
+**New here? Start with [Choosing the Right Test](choosing-a-test.qmd)** — the decision guide for picking the correct analysis.
+
+## The six parts
+
+| Part | Focus |
+|---|---|
+| [I — Data & Description](PartI-theory.qmd) | study design, pseudoreplication, descriptive stats, exploratory plots |
+| [II — Probability & Inference](PartII-theory.qmd) | distributions, sampling, the CLT, confidence intervals |
+| [III — Hypothesis Testing](PartIII-theory.qmd) | p-values done right, t-tests & non-parametric, categorical data |
+| [IV — Linear Models](PartIV-theory.qmd) | correlation, regression, ANOVA — one framework |
+| [V — GLMs & Mixed Models](PartV-theory.qmd) | logistic & Poisson GLMs, mixed-effects models, model selection |
+| [VI — Multivariate & Reproducible](PartVI-theory.qmd) | PCA & clustering, power, multiple testing, reproducible practice |
+
+## Setup
+
+```r
+install.packages(c("tidyverse", "lme4", "lmerTest", "MASS", "car"))
+```

@@ -1,0 +1,39 @@
+---
+title: "Bioinformatics & Statistics Courses"
+subtitle: "Hands-on, open courses in R — from first principles to real analysis"
+toc: false
+---
+
+Two linked, practical courses for biologists who want to analyse their own data in **R** — built around real pathogen-genomics and biology examples, with worked exercises and full solutions.
+
+::: {.grid}
+
+::: {.g-col-12 .g-col-md-6}
+### 🧬 [R for Bioinformatics](r-for-bioinformatics/index.qmd)
+From "I can open RStudio" to building documented, tested, installable tools.
+
+**5 parts · 17 modules** — the R mindset, files & objects, the tidyverse, Bioconductor, and writing your own package.
+
+[Start the R course →](r-for-bioinformatics/index.qmd)
+:::
+
+::: {.g-col-12 .g-col-md-6}
+### 📊 [Statistics for Biologists](statistics-for-biologists/index.qmd)
+From study design to generalised and mixed models — correctly and reproducibly.
+
+**6 parts · 16 modules** — description, probability, hypothesis testing, linear models, GLMs & mixed models, multivariate methods.
+
+[Start the Stats course →](statistics-for-biologists/index.qmd) · [Which test should I use?](statistics-for-biologists/choosing-a-test.qmd)
+:::
+
+:::
+
+---
+
+## How to use these courses
+
+Each part has **theory** pages and an **exercises** page (with downloadable `.R` scripts and full solutions). Work the theory and exercises together, in order; open the solutions only after trying.
+
+The courses assume you can install R and RStudio. The Statistics course assumes the basic R taught in the R course. All example data is in the `data/` folder of the [repository](https://github.com/USERNAME/bio-courses) — replace `USERNAME` with your GitHub account.
+
+> **Licence.** Course text © its author, released under **CC BY 4.0**; code samples under the **MIT licence**. Reuse freely with attribution.

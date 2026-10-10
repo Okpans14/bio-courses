@@ -1,0 +1,239 @@
+---
+title: "Part V — Reproducible Research & Your Tool — Exercises"
+---
+
+Download the scripts: [exercises](../downloads/R_PartV_exercises.R) · [solutions](../downloads/R_PartV_solutions.R).  
+Work the exercises first; open the solutions only after trying.
+
+::: {.panel-tabset}
+
+## Exercises
+
+````r
+# =====================================================================
+# R for Bioinformatics — Part V Exercises
+# Modules 16-17 · Reproducible Research & Your Own Tool
+# =====================================================================
+# Packages:
+#   install.packages(c("rmarkdown","knitr","devtools","roxygen2",
+#                      "testthat","usethis"))
+# Much of this module is done at the CONSOLE and in files, not by
+# running one script top to bottom. Follow the steps in comments.
+# =====================================================================
+
+
+# =====================================================================
+# Module 16 - reproducible reports
+# =====================================================================
+
+## 16A. Write a report --------------------------------------------------
+# 16A.1 (easy)
+# In RStudio: File -> New File -> R Markdown. Choose HTML. Knit the
+# default document to confirm your toolchain works. (No code to write
+# here - this is a setup check.)
+
+# 16A.2 (harder)
+# Create a report "expression_report.Rmd" that:
+#   - has a YAML header with a title and output: html_document,
+#   - loads the tidyverse and reads data/expression.csv in a setup chunk
+#     with message=FALSE,
+#   - states the number of rows using INLINE code: `r nrow(expr)`,
+#   - shows a faceted boxplot of tpm by condition in a chunk with
+#     echo=FALSE.
+# Knit it. See example_report.Rmd in this folder for a worked version.
+
+
+## 16B. Inline code -----------------------------------------------------
+# 16B.1 (harder)
+# Add a sentence to your report that reports the mean tpm, computed
+# inline, e.g.:  "Mean expression was `r round(mean(expr$tpm), 1)` TPM."
+# Re-knit and confirm the number appears in the text.
+
+
+# =====================================================================
+# Module 17 - writing your own R package
+# =====================================================================
+
+## 17A. Scaffold a package ----------------------------------------------
+# 17A.1
+# At the console, create a package skeleton:
+#   library(usethis)
+#   create_package("~/seqtools")
+# Inspect the created files: DESCRIPTION, NAMESPACE, R/.
+
+## 17B. Add a documented function ---------------------------------------
+# 17B.1 (harder)
+# Create R/gc_content.R containing gc_content() WITH roxygen2
+# documentation (@param, @return, @examples, @export). Then run:
+#   devtools::document()
+#   devtools::load_all()
+#   ?gc_content        # the help page should appear
+# Write the function + roxygen below first, then move it into the file.
+# your code here
+
+
+## 17C. Test it ---------------------------------------------------------
+# 17C.1 (harder)
+# Set up testing and add a test:
+#   usethis::use_testthat()
+#   usethis::use_test("gc_content")
+# In tests/testthat/test-gc_content.R, write expectations for
+# GGCC == 1, ATGC == 0.5, and an error on "ATGX". Then:
+#   devtools::test()
+# Write the test block below first.
+# your code here
+
+
+# =====================================================================
+# Course capstone - the seqtools package
+# =====================================================================
+# Assemble a small package `seqtools` that gathers the functions you
+# wrote across the course:
+#   - gc_content(seq)     (Part I)
+#   - revcomp(seq)        (Part I)
+#   - parse_fasta(path)   (Part II)
+# For each:
+#   1. put it in its own file under R/ with full roxygen docs and @export,
+#   2. add a testthat test,
+#   3. run devtools::document(), devtools::test(), and devtools::check().
+# Then write a short reproducible report (.Rmd) that loads the package,
+# parses data/sample.fasta, and tabulates id, length, and GC per
+# sequence - using YOUR package functions.
+#
+# Draft the three function files and their roxygen below, then build the
+# package. See PartV_solutions.R for a complete worked version.
+# your code here
+
+````
+
+## Solutions
+
+````r
+# =====================================================================
+# R for Bioinformatics — Part V Solutions
+# Modules 16-17 · Reproducible Research & Your Own Tool
+# =====================================================================
+# These solutions show the FILE CONTENTS and the CONSOLE COMMANDS you
+# would use. Package work happens across files, not in one script.
+# =====================================================================
+
+
+# =====================================================================
+# Module 16 - a worked report
+# =====================================================================
+# See example_report.Rmd in this folder for the full document. The key
+# pieces:
+#   - YAML header with title + output: html_document
+#   - setup chunk: ```{r setup, message=FALSE} library(tidyverse);
+#       expr <- read_csv("data/expression.csv") ```
+#   - inline: The dataset has `r nrow(expr)` rows.
+#   - figure chunk: ```{r, echo=FALSE} ggplot(expr, aes(condition, tpm))
+#       + geom_boxplot() + facet_wrap(~ gene) ```
+# Render with: rmarkdown::render("example_report.Rmd")
+
+
+# =====================================================================
+# Module 17 - the seqtools package
+# =====================================================================
+# Console steps:
+#   library(usethis)
+#   create_package("~/seqtools")
+#   use_mit_license()
+#   use_testthat()
+
+# ---- R/gc_content.R ---------------------------------------------------
+#' GC content of a DNA sequence
+#'
+#' @param seq A character string of DNA (A/C/G/T, any case).
+#' @return The GC fraction, a number between 0 and 1.
+#' @examples
+#' gc_content("ATGCGC")
+#' @export
+gc_content <- function(seq) {
+  b <- strsplit(toupper(seq), "")[[1]]
+  if (!all(b %in% c("A", "C", "G", "T"))) stop("non-ACGT character in sequence")
+  sum(b %in% c("G", "C")) / length(b)
+}
+
+# ---- R/revcomp.R ------------------------------------------------------
+#' Reverse complement of a DNA sequence
+#'
+#' @param seq A character string of DNA (A/C/G/T, any case).
+#' @return The reverse-complement sequence, a character string.
+#' @examples
+#' revcomp("ATGC")
+#' @export
+revcomp <- function(seq) {
+  comp <- c(A = "T", T = "A", G = "C", C = "G")[strsplit(toupper(seq), "")[[1]]]
+  if (anyNA(comp)) stop("non-ACGT character in sequence")
+  paste(rev(comp), collapse = "")
+}
+
+# ---- R/parse_fasta.R --------------------------------------------------
+#' Parse a FASTA file into a named character vector
+#'
+#' @param path Path to a FASTA file.
+#' @return A named character vector: names are sequence IDs, values are
+#'   the sequences.
+#' @examples
+#' \dontrun{parse_fasta("data/sample.fasta")}
+#' @export
+parse_fasta <- function(path) {
+  stopifnot(file.exists(path))
+  lines <- readLines(path)
+  headers <- grep("^>", lines)
+  if (length(headers) == 0) stop("no FASTA headers found in ", path)
+  ids <- sub("^>(\\S+).*", "\\1", lines[headers])
+  starts <- headers + 1
+  ends   <- c(headers[-1] - 1, length(lines))
+  seqs <- mapply(function(a, b) paste(lines[a:b], collapse = ""), starts, ends)
+  setNames(seqs, ids)
+}
+
+# ---- tests/testthat/test-gc_content.R --------------------------------
+# library(testthat)
+# test_that("gc_content works", {
+#   expect_equal(gc_content("GGCC"), 1)
+#   expect_equal(gc_content("ATGC"), 0.5)
+#   expect_error(gc_content("ATGX"))
+# })
+#
+# test_that("revcomp works", {
+#   expect_equal(revcomp("ATGC"), "GCAT")
+#   expect_error(revcomp("ATGX"))
+# })
+
+# ---- build & check (console) -----------------------------------------
+#   devtools::document()   # roxygen -> man/ + NAMESPACE
+#   devtools::load_all()   # load for interactive use
+#   devtools::test()       # run the suite
+#   devtools::check()      # full R CMD check - aim for 0 errors/warnings
+
+
+# =====================================================================
+# Capstone report - using YOUR package functions
+# =====================================================================
+# A minimal analysis that proves the package works end to end. If the
+# package is installed/loaded, this runs as-is:
+if (exists("parse_fasta") && exists("gc_content")) {
+  data_dir <- if (dir.exists("data")) "data" else "../data"
+  fa <- parse_fasta(file.path(data_dir, "sample.fasta"))
+  report <- data.frame(
+    id        = names(fa),
+    length_bp = nchar(fa),
+    gc        = vapply(fa, gc_content, numeric(1)),
+    row.names = NULL
+  )
+  report <- report[order(-report$gc), ]
+  print(report)
+}
+
+# ---------------------------------------------------------------------
+# Course complete. You began unable to write a line of R and now build
+# documented, tested, installable bioinformatics tools with reproducible
+# reports. From first principles to writing your own tools - done.
+# ---------------------------------------------------------------------
+
+````
+
+:::
