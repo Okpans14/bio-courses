@@ -1,7 +1,0 @@
-/* Light, readable theme tweaks */
-:root { --accent: #2c6e49; }
-h1, h2, h3 { color: var(--accent); }
-.navbar { border-bottom: 2px solid var(--accent); }
-pre code { font-size: 0.86em; }
-.panel-tabset { margin-top: 1rem; }
-table { font-size: 0.95em; }
