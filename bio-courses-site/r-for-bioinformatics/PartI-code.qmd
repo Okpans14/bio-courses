@@ -1,0 +1,527 @@
+---
+title: "Part I — Foundations — Exercises"
+---
+
+Download the scripts: [exercises](../downloads/R_PartI_exercises.R) · [solutions](../downloads/R_PartI_solutions.R).  
+Work the exercises first; open the solutions only after trying.
+
+::: {.panel-tabset}
+
+## Exercises
+
+````r
+# =====================================================================
+# R for Bioinformatics — Part I Exercises
+# Modules 1-5 · Foundations
+# =====================================================================
+#
+# Work through this script ALONGSIDE the theory document, in order.
+# When the theory says "> Practise now - Module 2 -> 2A", come here and
+# do section 2A before reading on.
+#
+# Format: each section opens with a WORKED EXAMPLE to run and study,
+# then an (easy) exercise, then (harder) ones, sometimes a (challenge).
+# Write your code where it says "# your code here". Run a line with
+# Ctrl/Cmd+Enter. Only open the solutions script after you have tried.
+#
+# Everything uses a bioinformatics context. No packages are needed in
+# Part I (base R only).
+# =====================================================================
+
+
+# ---------------------------------------------------------------------
+# Exercise 0 - confirm your setup
+# ---------------------------------------------------------------------
+# Run these two lines. If you see your R version and "ready", you are set.
+print(R.version.string)
+print("ready")
+
+
+# =====================================================================
+# Module 1 - syntax, types, formatted output
+# =====================================================================
+
+## 1A. Formatted output -------------------------------------------------
+### Worked example (run it)
+gene_name  <- "rpoB"
+length_bp  <- 3534L
+gc_content <- 0.5237
+cat(sprintf("Gene %s: %d bp, GC = %.2f%%\n", gene_name, length_bp, gc_content * 100))
+
+### 1A.1 (easy)
+# Make variables gene_name (character), length_bp (integer),
+# protein_length (integer). Print one sentence with sprintf(), e.g.
+#   katG encodes a protein of 740 amino acids (2223 bp).
+# your code here
+
+
+### 1A.2 (harder)
+# For length_bp <- 2223, compute the protein length IN CODE as
+# (length_bp %/% 3) - 1   (integer division; stop codon is not an aa)
+# and print:  2223 bp -> 740 amino acids
+# your code here
+
+
+## 1B. Types and conversion ---------------------------------------------
+### Worked example
+count_text <- "1287"
+count <- as.integer(count_text)
+cat(class(count_text), "->", class(count), "\n")
+cat("Doubled:", count * 2, "\n")
+
+### 1B.1 (easy)
+# reads_text <- "4820000" and mapped_text <- "4502300" are strings from
+# a sequencing run. Convert both to numeric and print the mapped reads.
+# your code here
+
+
+### 1B.2 (harder)
+# Using the two values above, compute the mapping rate as a percentage
+# (mapped / reads * 100) and print it to 2 decimals with sprintf().
+# your code here
+
+
+## 1C. Integer division and modulo --------------------------------------
+### Worked example
+cat(1000 %/% 3, "complete codons,", 1000 %% 3, "leftover base(s)\n")
+
+### 1C.1 (easy)
+# A plasmid is 4361 bp, cut into 750 bp fragments. Print how many whole
+# fragments you get and the remainder, e.g.
+#   Approx 5 fragments of 750 bp, plus a 611 bp remainder.
+# your code here
+
+
+# =====================================================================
+# Module 2 - vectors & strings
+# =====================================================================
+
+## 2A. Indexing and slicing ---------------------------------------------
+### Worked example
+genes <- c("rpoB", "katG", "gyrA", "pncA")
+cat(genes[1], genes[length(genes)], genes[2:3], "\n")  # first, last, middle
+cat(genes[-1], "\n")                                    # all except the first
+
+### 2A.1 (easy)
+# cds <- "ATGAAACCCGGGTAA". Using substr(), print the start codon (1-3),
+# the stop codon (last 3), and the inner region (4 to nchar-3).
+cds <- "ATGAAACCCGGGTAA"
+# your code here
+
+
+### 2A.2 (harder)
+# lengths_bp <- c(3534, 2223, 2628, 561, 1200). Using a LOGICAL MASK
+# (no loop), print only the lengths greater than 2000.
+lengths_bp <- c(3534, 2223, 2628, 561, 1200)
+# your code here
+
+
+## 2B. Counting & composition -------------------------------------------
+### Worked example
+seq <- "ATGCGCGTAT"
+bases <- strsplit(seq, "")[[1]]
+print(table(bases))                         # frequency of each base
+gc <- sum(bases %in% c("G", "C")) / length(bases)
+cat(sprintf("GC: %.2f%%\n", gc * 100))
+
+### 2B.1 (easy)
+# dna <- "ATGCGTACG". Transcribe it to mRNA (replace T with U) using
+# gsub(), and print the result.
+dna <- "ATGCGTACG"
+# your code here
+
+
+### 2B.2 (harder)
+# Write the GC calculation for dna above as a SINGLE vectorised
+# expression (split -> %in% -> sum / length). Print it as a percentage.
+# your code here
+
+
+## 2C. Reverse complement -----------------------------------------------
+### Worked example (named-vector lookup, vectorised)
+revcomp <- function(s) {
+  comp <- c(A = "T", T = "A", G = "C", C = "G")[strsplit(toupper(s), "")[[1]]]
+  paste(rev(comp), collapse = "")
+}
+cat(revcomp("ATGC"), "\n")   # GCAT
+
+### 2C.1 (harder)
+# Use the revcomp() function above to print the reverse complement of
+# "GGGTTTAAACCC". Is it a palindrome (equal to its own rev-comp)?
+# your code here
+
+
+### 2C.2 (challenge)
+# Find the start position of the FIRST "ATG" in "CCATGCCCATGTAA" using
+# a base-R function (hint: regexpr), then find ALL ATG start positions
+# (hint: gregexpr). Print both.
+# your code here
+
+
+# =====================================================================
+# Module 3 - control flow & vectorised thinking
+# =====================================================================
+
+## 3A. Conditionals -----------------------------------------------------
+### Worked example
+gc <- 0.35
+if (gc > 0.6) print("GC-rich") else if (gc < 0.4) print("AT-rich") else print("balanced")
+
+### 3A.1 (easy)
+# length_bp <- 1500, gc <- 0.55. Print TRUE if the sequence is longer
+# than 1000 AND gc is between 0.4 and 0.6 (inclusive). Use && and single
+# comparisons.
+# your code here
+
+
+### 3A.2 (harder)
+# gc_values <- c(0.35, 0.55, 0.72, 0.41). WITHOUT a loop, label each as
+# "high" (>0.6) or "low" using ifelse(). Print the labels.
+gc_values <- c(0.35, 0.55, 0.72, 0.41)
+# your code here
+
+
+## 3B. Loops ------------------------------------------------------------
+### Worked example - codon walker
+cds <- "ATGAAACCCGGGTAA"
+for (i in seq(1, nchar(cds) - 2, by = 3)) {
+  cat(i, ":", substr(cds, i, i + 2), "\n")
+}
+
+### 3B.1 (harder)
+# Count G+C in "ATGCGCGTAT" by LOOPING over each base with a counter,
+# then print the same count as ONE vectorised line. Confirm they match.
+# your code here
+
+
+## 3C. while loops ------------------------------------------------------
+### 3C.1 (challenge) - minimal ORF finder
+# seq <- "CCCATGAAACCCGGGTAACC". Find the first ATG, then walk forward in
+# steps of 3 collecting codons until you hit a stop (TAA/TAG/TGA).
+# Print the ORF including the stop codon. Expected: ATGAAACCCGGGTAA
+seq <- "CCCATGAAACCCGGGTAACC"
+# your code here
+
+
+# =====================================================================
+# Module 4 - data structures
+# =====================================================================
+
+## 4A. Vectors & lists --------------------------------------------------
+### Worked example
+record <- list(gene = "rpoB", length = 3534L, exons = c(1, 2, 3))
+cat(record$gene, record[["length"]], "\n")
+
+### 4A.1 (easy)
+# Make a character vector `genes` of c("dnaA", "gyrB"). Append "recA"
+# (hint: c(genes, "recA")), then change the first element to "dnaA_mut".
+# Print the vector and its length.
+# your code here
+
+
+## 4B. Named vectors & tables -------------------------------------------
+### 4B.1 (harder) - base-frequency counter
+# seq <- "AATTTGCGCGCGAT". Produce a named count of each base using
+# table(), and print it. Then print just the count of "G".
+seq <- "AATTTGCGCGCGAT"
+# your code here
+
+
+### 4B.2 (harder) - codon translation with a lookup vector
+# Build a named vector codon_table with at least:
+#   ATG=M, AAA=K, TGG=W, TAA=*, TAG=*, TGA=*
+# For cds <- "ATGAAATGG", split into codons and translate to "MKW".
+cds <- "ATGAAATGG"
+# your code here
+
+
+## 4C. Data frames ------------------------------------------------------
+### Worked example
+variants <- data.frame(
+  gene     = c("rpoB", "katG", "gyrA", "gyrA"),
+  position = c(1349, 944, 248, 259),
+  quality  = c(45.2, 38.7, 52.1, 29.4)
+)
+print(variants)
+print(variants[variants$quality > 40, ])   # rows passing a filter
+
+### 4C.1 (harder)
+# From `variants` above: (a) print just the `gene` column, (b) print the
+# number of rows, (c) print only the rows where gene == "gyrA".
+# your code here
+
+
+### Module 4 challenge - base-composition report
+# For seq <- "ATGCGCGTATTACCGGGCAT" print: length, whether it is valid
+# DNA (only ACGT), the base composition (table), and GC% to 2 dp.
+seq <- "ATGCGCGTATTACCGGGCAT"
+# your code here
+
+
+# =====================================================================
+# Module 5 - functions, scope & scripts
+# =====================================================================
+
+## 5A. Writing functions ------------------------------------------------
+### Worked example
+seq_length <- function(s) nchar(s)
+cat(seq_length("ATGCGT"), "\n")
+
+### 5A.1 (easy)
+# Write gc_content(seq) that returns the GC FRACTION of a DNA string
+# (upper-case it first). Test on "ATGCGC" (expect 0.6667).
+# your code here
+
+
+### 5A.2 (harder)
+# Write count_base(seq, base = "G") with a default, returning the count
+# of `base` in `seq` (case-insensitive). Test the default and base = "A".
+# your code here
+
+
+## 5B. Multiple return values -------------------------------------------
+### 5B.1 (harder)
+# Write analyse(seq) that returns a LIST with: length, gc (fraction),
+# and valid (TRUE if only ACGT). Test on "ATGCGX" and print res$valid.
+# your code here
+
+
+# =====================================================================
+# Part I capstone - a full sequence report from your own functions
+# =====================================================================
+# Write sequence_report(seq) that prints, for an upper-cased sequence:
+#   Length, Valid DNA (only ACGT), Composition (table), GC% (2 dp),
+#   Reverse complement, and the list of codons.
+# Reuse gc_content() and revcomp(). Test on "ATGCGTACGGGCTAA".
+# your code here
+
+````
+
+## Solutions
+
+````r
+# =====================================================================
+# R for Bioinformatics — Part I Solutions
+# Modules 1-5 · Foundations
+# =====================================================================
+# Reference solutions with commentary. More than one correct approach
+# usually exists; if yours gives the right result and reads clearly, it
+# is fine. Compare APPROACH, not just output.
+# =====================================================================
+
+
+# =====================================================================
+# Module 1
+# =====================================================================
+
+## 1A.1
+gene_name <- "katG"; length_bp <- 2223L; protein_length <- 740L
+cat(sprintf("%s encodes a protein of %d amino acids (%d bp).\n",
+            gene_name, protein_length, length_bp))
+
+## 1A.2 - compute, don't hard-code
+length_bp <- 2223L
+protein_length <- (length_bp %/% 3) - 1        # integer division with %/%
+cat(sprintf("%d bp -> %d amino acids\n", length_bp, protein_length))
+
+## 1B.1
+reads_text <- "4820000"; mapped_text <- "4502300"
+mapped <- as.numeric(mapped_text)
+cat("Mapped reads:", mapped, "\n")
+
+## 1B.2 - division yields a double automatically
+reads <- as.numeric("4820000"); mapped <- as.numeric("4502300")
+rate <- mapped / reads * 100
+cat(sprintf("Mapping rate: %.2f%%\n", rate))   # 93.41%
+
+## 1C.1
+plasmid <- 4361; frag <- 750
+cat(sprintf("Approx %d fragments of %d bp, plus a %d bp remainder.\n",
+            plasmid %/% frag, frag, plasmid %% frag))
+
+
+# =====================================================================
+# Module 2
+# =====================================================================
+
+## 2A.1 - substr() is 1-based and inclusive at both ends
+cds <- "ATGAAACCCGGGTAA"
+cat("start:", substr(cds, 1, 3), "\n")                 # ATG
+cat("stop: ", substr(cds, nchar(cds) - 2, nchar(cds)), "\n")  # TAA
+cat("inner:", substr(cds, 4, nchar(cds) - 3), "\n")    # AAACCCGGG
+
+## 2A.2 - logical mask, no loop
+lengths_bp <- c(3534, 2223, 2628, 561, 1200)
+print(lengths_bp[lengths_bp > 2000])                   # 3534 2223 2628
+
+## 2B.1 - gsub replaces ALL matches
+dna <- "ATGCGTACG"
+cat("mRNA:", gsub("T", "U", dna), "\n")                # AUGCGUACG
+
+## 2B.2 - one vectorised expression
+dna <- "ATGCGTACG"
+b <- strsplit(dna, "")[[1]]
+cat(sprintf("GC: %.2f%%\n", sum(b %in% c("G", "C")) / length(b) * 100))  # 55.56%
+
+## 2C.1 - reuse revcomp(); palindrome check
+revcomp <- function(s) {
+  comp <- c(A = "T", T = "A", G = "C", C = "G")[strsplit(toupper(s), "")[[1]]]
+  paste(rev(comp), collapse = "")
+}
+s <- "GGGTTTAAACCC"
+rc <- revcomp(s)
+cat(rc, "\n")                      # GGGTTTAAACCC
+cat("palindrome:", s == rc, "\n")  # TRUE
+
+## 2C.2 - regexpr finds the first; gregexpr finds all
+seq <- "CCATGCCCATGTAA"
+cat("first ATG at:", regexpr("ATG", seq)[1], "\n")     # 3 (R is 1-based!)
+all_atg <- gregexpr("ATG", seq)[[1]]
+cat("all ATG starts:", as.integer(all_atg), "\n")      # 3 9
+# NOTE: positions are 1-based in R, so they differ by 1 from Python's find().
+
+
+# =====================================================================
+# Module 3
+# =====================================================================
+
+## 3A.1
+length_bp <- 1500; gc <- 0.55
+print(length_bp > 1000 && gc >= 0.4 && gc <= 0.6)      # TRUE
+
+## 3A.2 - ifelse() is vectorised; no loop
+gc_values <- c(0.35, 0.55, 0.72, 0.41)
+print(ifelse(gc_values > 0.6, "high", "low"))          # low low high low
+
+## 3B.1 - loop vs vectorised, same answer
+seq <- "ATGCGCGTAT"; bases <- strsplit(seq, "")[[1]]
+gc <- 0
+for (b in bases) if (b == "G" || b == "C") gc <- gc + 1
+cat("loop:", gc, "\n")
+cat("vectorised:", sum(bases %in% c("G", "C")), "\n")   # both 5
+
+## 3C.1 - minimal ORF finder with a while loop
+seq <- "CCCATGAAACCCGGGTAACC"
+start <- regexpr("ATG", seq)[1]
+orf <- ""; i <- start
+while (i <= nchar(seq) - 2) {
+  codon <- substr(seq, i, i + 2)
+  orf <- paste0(orf, codon)
+  if (codon %in% c("TAA", "TAG", "TGA")) break
+  i <- i + 3
+}
+cat("ORF:", orf, "\n")                                  # ATGAAACCCGGGTAA
+
+
+# =====================================================================
+# Module 4
+# =====================================================================
+
+## 4A.1 - vectors are copied on modify (no aliasing surprise like Python lists)
+genes <- c("dnaA", "gyrB")
+genes <- c(genes, "recA")       # append by re-combining
+genes[1] <- "dnaA_mut"          # replace first
+print(genes); cat("length:", length(genes), "\n")
+
+## 4B.1 - table() gives named counts
+seq <- "AATTTGCGCGCGAT"
+counts <- table(strsplit(seq, "")[[1]])
+print(counts)
+cat("G:", counts["G"], "\n")
+
+## 4B.2 - translation via a named lookup vector (vectorised, no loop)
+codon_table <- c(ATG="M", AAA="K", TGG="W", TAA="*", TAG="*", TGA="*")
+cds <- "ATGAAATGG"
+codons <- substring(cds, seq(1, nchar(cds) - 2, by = 3), seq(3, nchar(cds), by = 3))
+protein <- paste(codon_table[codons], collapse = "")
+cat(protein, "\n")              # MKW
+
+## 4C.1 - data frame access
+variants <- data.frame(
+  gene     = c("rpoB", "katG", "gyrA", "gyrA"),
+  position = c(1349, 944, 248, 259),
+  quality  = c(45.2, 38.7, 52.1, 29.4)
+)
+print(variants$gene)                         # (a) the column
+cat("rows:", nrow(variants), "\n")           # (b) row count
+print(variants[variants$gene == "gyrA", ])   # (c) filtered rows
+
+## Module 4 challenge - base-composition report
+seq <- "ATGCGCGTATTACCGGGCAT"
+bases <- strsplit(seq, "")[[1]]
+valid <- all(bases %in% c("A", "C", "G", "T"))
+gc <- sum(bases %in% c("G", "C")) / length(bases)
+cat("Length:     ", nchar(seq), "\n")
+cat("Valid DNA:  ", valid, "\n")
+cat("Composition:\n"); print(table(bases))
+cat(sprintf("GC content:  %.2f%%\n", gc * 100))   # 55.00%
+
+
+# =====================================================================
+# Module 5
+# =====================================================================
+
+## 5A.1
+gc_content <- function(seq) {
+  b <- strsplit(toupper(seq), "")[[1]]
+  sum(b %in% c("G", "C")) / length(b)
+}
+cat(gc_content("ATGCGC"), "\n")               # 0.6667
+
+## 5A.2 - default argument
+count_base <- function(seq, base = "G") {
+  b <- strsplit(toupper(seq), "")[[1]]
+  sum(b == toupper(base))
+}
+cat(count_base("ATGCGC"), "\n")               # 2 (default G)
+cat(count_base("ATGCGC", base = "A"), "\n")   # 1
+
+## 5B.1 - return several things in a list; all()/any() for validation
+analyse <- function(seq) {
+  seq <- toupper(seq)
+  b <- strsplit(seq, "")[[1]]
+  list(
+    length = nchar(seq),
+    gc     = sum(b %in% c("G", "C")) / length(b),
+    valid  = all(b %in% c("A", "C", "G", "T"))
+  )
+}
+res <- analyse("ATGCGX")
+print(res$valid)                              # FALSE (contains X)
+
+
+# =====================================================================
+# Part I capstone
+# =====================================================================
+revcomp <- function(seq) {
+  comp <- c(A="T", T="A", G="C", C="G")[strsplit(toupper(seq), "")[[1]]]
+  paste(rev(comp), collapse = "")
+}
+gc_content <- function(seq) {
+  b <- strsplit(toupper(seq), "")[[1]]
+  sum(b %in% c("G", "C")) / length(b)
+}
+codons_of <- function(seq) {
+  substring(seq, seq(1, nchar(seq) - 2, by = 3), seq(3, nchar(seq), by = 3))
+}
+sequence_report <- function(seq) {
+  seq <- toupper(seq)
+  b <- strsplit(seq, "")[[1]]
+  cat(sprintf("Length:       %d bp\n", nchar(seq)))
+  cat(sprintf("Valid DNA:    %s\n", all(b %in% c("A","C","G","T"))))
+  cat("Composition:  "); print(table(b))
+  cat(sprintf("GC content:   %.2f%%\n", gc_content(seq) * 100))
+  cat(sprintf("Rev-comp:     %s\n", revcomp(seq)))
+  cat("Codons:       ", paste(codons_of(seq), collapse = " "), "\n")
+}
+sequence_report("ATGCGTACGGGCTAA")
+
+# ---------------------------------------------------------------------
+# You've finished the foundations. In Part II we read real FASTA/FASTQ
+# files, add error handling and automated tests, and learn R's object
+# systems - turning these loose functions into a proper toolkit.
+# ---------------------------------------------------------------------
+
+````
+
+:::

@@ -1,0 +1,188 @@
+---
+title: "Part V — Reproducible Research & Your Tool — Theory"
+---
+
+## From first principles to writing your own tools
+
+### PART V — Reproducible Research & Your Own Tool · Modules 16–17
+
+*R Markdown / Quarto · writing your own R package*
+
+Read a section, then do the matching exercises in `PartV_exercises.R` before continuing.
+
+## Where Part V takes you
+
+You can now write R, analyse data, and use the ecosystem. Part V is about making your work *last* and *travel*: a report that regenerates itself from code and data (so “how did you get this figure?” always has an answer), and a package that bundles your functions with documentation and tests so other people — including future you — can install and trust them.
+
+This is the half of the course that turns a competent R user into one whose work others can build on. It is also, deliberately, the smallest amount of new syntax and the largest amount of good habit.
+
+**Time guide.** Module 16 ≈ 5h · Module 17 ≈ 8h. Total ≈ 13 hours.
+
+**Packages.** `install.packages(c("rmarkdown", "knitr", "devtools", "roxygen2", "testthat", "usethis"))`. Rendering also needs a LaTeX install only if you want PDF output; HTML needs nothing extra.
+
+## Module 16 — Reproducible reports with R Markdown / Quarto
+
+Estimated: 5 hours. A reproducible report interleaves prose, code, and the code’s output in one document that you *render* to HTML, PDF, or Word. Change the data, re-render, and every number and figure updates. No more copy-pasting plots into a document.
+
+### 16.1 R Markdown vs Quarto
+
+**R Markdown** (`.Rmd`) is the long-established format. **Quarto** (`.qmd`) is its successor — same idea, broader (works with Python and Julia too), actively developed. The syntax is nearly identical; learn R Markdown and Quarto costs you an afternoon. New projects should prefer Quarto; you will meet both.
+
+### 16.2 Anatomy of a document
+
+Three ingredients: a YAML header, prose in Markdown, and code chunks.
+
+    ---
+    title: "Expression analysis"
+    author: "M. Okpanachi"
+    date: "2026-10-10"
+    output: html_document      # or: pdf_document, word_document
+    ---
+
+    ## Introduction
+
+    We compare expression between control and treated samples.
+
+    ```r
+    library(tidyverse)
+    expr <- read_csv("data/expression.csv")
+    ```
+
+    The dataset has `` `r nrow(expr)` `` rows.
+
+    ```r
+    ggplot(expr, aes(condition, tpm)) + geom_boxplot() + facet_wrap(~ gene)
+    ```
+
+-   The **YAML header** (between the `---` lines) sets title, author, and output format.
+-   **Code chunks** open with ```` ```{r label, options} ```` and run when you render.
+-   **Inline code** — `` `` `r nrow(expr)` `` `` — drops a computed value straight into a sentence. This is the magic: the text itself stays correct when the data changes.
+
+### 16.3 Chunk options that matter
+
+  -----------------------------------------------------------------------------------------------
+  Option                              Effect
+  ----------------------------------- -----------------------------------------------------------
+  `echo=FALSE`                        run the code, hide it; show only output (figures, tables)
+
+  `message=FALSE`, `warning=FALSE`    suppress library load noise
+
+  `eval=FALSE`                        show the code but do not run it
+
+  `fig.width=`, `fig.height=`         size the figures
+
+  `cache=TRUE`                        cache a slow chunk so re-renders are fast
+  -----------------------------------------------------------------------------------------------
+
+### 16.4 Rendering
+
+Click **Knit** (R Markdown) or **Render** (Quarto) in RStudio, or from the console:
+
+    rmarkdown::render("report.Rmd")      # -> report.html
+    quarto::quarto_render("report.qmd")  # Quarto
+
+The output is a self-contained file you can email or publish. Because it was produced *from the code*, anyone with the `.Rmd` and the data can reproduce it exactly — the definition of reproducible research.
+
+### 16.5 Why this matters in bioinformatics
+
+Analyses get revisited: a reviewer asks for a changed threshold, a new sample arrives, a bug is found upstream. With a rendered report, you change one line and re-knit; every downstream number, table, and figure updates together, and the document records exactly how each result was produced. It is the single highest-leverage habit in computational biology.
+
+> **▶ Practise now — Module 16 → sections 16A–16B in** `PartV_exercises.R`**.**
+
+## Module 17 — Writing your own R package
+
+Estimated: 8 hours. The capstone. A package is the standard way to bundle functions, documentation, and tests into something installable. It sounds advanced; modern tooling (`devtools`, `usethis`, `roxygen2`) makes it approachable, and doing it once changes how you think about your code.
+
+### 17.1 Why package your code?
+
+The `source("seqtools.R")` from Part I works, but a package gives you: documented functions (`?gc_content` just works), automated tests that run on demand, dependency management, a version number, and one-command installation (`install.packages` or `devtools::install_github`). It is how you put a tool “on GitHub” so others can use it.
+
+### 17.2 Create the skeleton
+
+`usethis` scaffolds everything:
+
+    library(usethis)
+    create_package("~/seqtools")   # makes the folder and the required files
+
+You get the standard layout:
+
+    seqtools/
+      DESCRIPTION      # name, version, author, dependencies  (metadata)
+      NAMESPACE        # what the package exports  (auto-generated)
+      R/               # your function source files
+      tests/           # testthat tests
+      man/             # help pages  (auto-generated from roxygen)
+
+### 17.3 Add a function with documentation
+
+Put functions in `R/`. Document them with **roxygen2** comments (`#'`) directly above each function — these generate the help page and manage exports:
+
+    #' GC content of a DNA sequence
+    #'
+    #' @param seq A character string of DNA (A/C/G/T, any case).
+    #' @return The GC fraction, a number between 0 and 1.
+    #' @examples
+    #' gc_content("ATGCGC")
+    #' @export
+    gc_content <- function(seq) {
+      b <- strsplit(toupper(seq), "")[[1]]
+      if (!all(b %in% c("A","C","G","T"))) stop("non-ACGT character")
+      sum(b %in% c("G","C")) / length(b)
+    }
+
+`@param` and `@return` document arguments and output; `@examples` become runnable examples; `@export` makes the function visible to users. Then generate the docs and `NAMESPACE`:
+
+    devtools::document()     # turns roxygen comments into man/ pages + NAMESPACE
+
+### 17.4 Test it
+
+Set up testthat and add tests under `tests/testthat/`:
+
+    usethis::use_testthat()
+    usethis::use_test("gc_content")    # creates tests/testthat/test-gc_content.R
+    # tests/testthat/test-gc_content.R
+    test_that("gc_content works", {
+      expect_equal(gc_content("GGCC"), 1)
+      expect_equal(gc_content("ATGC"), 0.5)
+      expect_error(gc_content("ATGX"))
+    })
+
+Run the whole suite:
+
+    devtools::test()     # runs every test, reports pass/fail
+
+### 17.5 The development loop
+
+Four commands cover day-to-day package work:
+
+  ----------------------------------------------------------------------------------------------------
+  Command                             Does
+  ----------------------------------- ----------------------------------------------------------------
+  `devtools::load_all()`              load the package as if installed, for interactive testing
+
+  `devtools::document()`              regenerate help pages and NAMESPACE from roxygen
+
+  `devtools::test()`                  run the test suite
+
+  `devtools::check()`                 run R’s full package checks (the gold standard before release)
+  ----------------------------------------------------------------------------------------------------
+
+`devtools::check()` is the one that matters most: it runs the same checks CRAN does — documentation completeness, example correctness, tests, portability — and a package that passes `check()` cleanly is one you can trust and share.
+
+### 17.6 Share it
+
+Put the package folder under git, push to GitHub, and anyone can install it:
+
+    # usethis::use_git(); usethis::use_github()   # set up the repo
+    devtools::install_github("yourname/seqtools")  # how others install it
+
+Add a `README`, pick a licence (`usethis::use_mit_license()`), and you have published a real bioinformatics tool.
+
+### 17.7 Where the course leaves you
+
+You started unable to write a line of R and can now: think in vectors; write functions, scripts, and your own classes; read the file formats bioinformatics runs on; wrangle, reshape, and plot data with the tidyverse; use Bioconductor’s core objects for sequences, ranges, and assays; and package your work into a documented, tested, installable tool with a reproducible report to go with it.
+
+That is the full arc — from first principles to writing your own tools. The Part V capstone asks you to do exactly that: take the functions you wrote across the course and assemble them into a small package with documentation, tests, and a short analysis report. Everything you need is now in your hands.
+
+> **▶ Practise now — Module 17 → the course capstone in** `PartV_exercises.R`**.**
+
